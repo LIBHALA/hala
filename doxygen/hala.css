@@ -1,0 +1,114 @@
+/*
+ * Imports, namely google fonts
+ */
+
+/* @import url('https://fonts.googleapis.com/css?family=Merriweather+Sans|Source+Sans+Pro'); */
+
+/* @import url('https://fonts.googleapis.com/css?family=Roboto+Slab&display=swap'); */
+
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono|Roboto+Slab&display=swap');
+
+
+/*
+ *  Global font and page justify
+ */
+html *{
+    font-size: 1em;
+    color: #000;
+    font-family: 'Roboto Slab', serif;
+}
+
+div.contents {
+    max-width: 60em;
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+#doc-content {
+    background: #F5F5F5;
+}
+
+#side-nav {
+    width: 19em;
+    min-height: 100%;
+}
+
+#nav-tree {
+    background: #F5F5F5;
+}
+
+/*
+ * Code snipets
+ */
+div.fragment {
+    border-radius: 5px;
+    padding: 0.5em;
+    background-color: rgb(240,247,238);
+}
+
+div.line {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.em;
+    margin: .2em auto;
+}
+a.code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.0em;
+    margin: .2em auto;
+}
+
+/*
+ * Doxygen logo
+ */
+.doxygen {
+    position: absolute;
+    color: #000;
+    background: rgba(255, 255, 255, .5);
+    padding: 5px;
+    border-radius: 10px;
+    font-size: 1em;
+    right: 10px;
+    top: 10px;
+}
+
+.doxygen img {
+    width: 60px;
+}
+
+/*
+ * Top header
+ */
+#projectname {
+    font-size: 1.25em;
+    color: #000;
+    text-shadow: #000 6px 4px 50px;
+}
+
+#titlearea {
+    border-bottom: none;
+    background: #8FBC8F;
+}
+
+/*
+ * Tables with functions
+ */
+.memberdecls tr,
+.memberdecls td {
+    overflow-wrap: break-word;
+    table-layout: fixed;
+    max-width: 60em;
+}
+
+/*
+ * Overload block
+ */
+span.overloads {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.1em;
+    display: block;
+    max-width: 60em;
+    height: auto;
+    padding: 5px;
+    border: 1px solid black;
+    background-color: rgb(229, 232, 232);
+}
