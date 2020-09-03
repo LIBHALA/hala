@@ -12,7 +12,6 @@
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section
 
-#define __HIP_PLATFORM_HCC__
 #include <hip/hip_runtime.h>
 #include <rocblas.h>
 #include <rocsparse.h>
