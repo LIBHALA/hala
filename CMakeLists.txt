@@ -175,7 +175,7 @@ endif()
 
 ############ ROCM ############
 if (HALA_GPU_BACKEND STREQUAL "ROCM")
-    set(HALA_ROCM_ROOT "${ROCM_ROOT}" CACHE PATH "The root folder for the Rocm framework installation")
+    set(HALA_ROCM_ROOT "$ENV{ROCM_ROOT}" CACHE PATH "The root folder for the Rocm framework installation")
     if (HALA_ROCM_ROOT)
         list(APPEND CMAKE_PREFIX_PATH "${HALA_ROCM_ROOT}")
     endif()
@@ -184,7 +184,6 @@ if (HALA_GPU_BACKEND STREQUAL "ROCM")
     find_package(rocsparse REQUIRED)
 
     target_link_libraries(HALA INTERFACE roc::rocblas roc::rocsparse)
-    target_link_libraries(HALA INTERFACE ${hip_INCLUDE_DIR}/../lib/libhip_hcc.so)
     target_include_directories(HALA INTERFACE ${hip_INCLUDE_DIR})
 
     set(HALA_ENABLE_ROCM ON)

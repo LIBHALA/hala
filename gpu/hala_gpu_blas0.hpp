@@ -126,6 +126,7 @@ inline void dgmm(gpu_engine const &engine, char side, int M, int N, VectorLikeA 
     #endif
     #ifdef HALA_ENABLE_ROCM
     // as of rocblas 3.5 dgmm is bugged, see https://github.com/ROCmSoftwarePlatform/rocBLAS/issues/1160
+    // fixed in develop, but the fix didn't make it to 3.7, keep fingers crosses for 3.9
 //     rocm_call_backend<scalar_type>(rocblas_sdgmm, rocblas_ddgmm, rocblas_cdgmm, rocblas_zdgmm,
 //         "GPU-BLAS::Xdgmm()", engine, gpu_side, M, N, convert(A), lda, convert(x), incx, cconvert(C), ldc);
     if (gpu_side == rocblas_side_left){

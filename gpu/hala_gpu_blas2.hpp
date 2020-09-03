@@ -388,13 +388,8 @@ inline void tbsv(gpu_engine const &engine, char uplo, char trans, char diag, int
                       "GPU-BLAS::Xtbsv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // fallback, missing as of 3.3.0
-//    rocm_call_backend<scalar_type>(rocblas_stbsv, rocblas_dtbsv, rocblas_ctbsv, rocblas_ztbsv,
-//                      "rocBlas::Xtbsv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
-    auto cA = engine.unload(A);
-    auto cx = engine.unload(x);
-    tbsv(uplo, trans, diag, N, k, cA, lda, cx, incx);
-    gpu_copy_n<copy_direction::host2device>(get_data(cx), get_size(x), get_data(x));
+    rocm_call_backend<scalar_type>(rocblas_stbsv, rocblas_dtbsv, rocblas_ctbsv, rocblas_ztbsv,
+                      "rocBlas::Xtbsv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
     #endif
 }
 
