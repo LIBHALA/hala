@@ -172,7 +172,7 @@ public:
         gemv(trans, alpha, x, beta, y, gpu_vector<value_type>(rengine.device()));
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc){
+    size_t gemm_buffer_size(char, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC&, int){
         if (is_complex<value_type>::value and trans_to_rocm_sparse<value_type>(transb) == rocsparse_operation_conjugate_transpose){
             return hala_size(b_rows, b_cols) * sizeof(value_type);
         }
@@ -194,8 +194,6 @@ public:
         auto rocm_transa = trans_to_rocm_sparse<value_type>(transa);
         auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
         runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose gemm operations.");
-
-        auto desc = make_rocsparse_general_description();
 
         if (is_complex<value_type>::value and rocm_transb == rocsparse_operation_conjugate_transpose){
             // employing manual out-of-place conj-transpose for B
