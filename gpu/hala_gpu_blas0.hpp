@@ -172,11 +172,11 @@ void tp2tr(gpu_engine const &engine, char uplo, int N, VectorLikeAP const &AP, V
     assert( check_uplo(uplo) );
     check_set_size(assume_output, A, lda, N);
 
+    #ifdef HALA_ENABLE_CUDA
     auto cuda_uplo = uplo_to_gpu(uplo);
 
     using scalar_type = get_scalar_type<VectorLikeA>;
 
-    #ifdef HALA_ENABLE_CUDA
     cuda_call_backend<scalar_type>(cublasStpttr, cublasDtpttr, cublasCtpttr, cublasZtpttr,
         "GPU-BLAS::Xtpttr()", engine, cuda_uplo, N, convert(AP), cconvert(A), lda);
     #endif
@@ -208,11 +208,11 @@ void tr2tp(gpu_engine const &engine, char uplo, int N, VectorLikeA const &A, int
     assert( check_uplo(uplo) );
     check_set_size(assume_output, AP, (N * (N+1)) / 2);
 
+    #ifdef HALA_ENABLE_CUDA
     auto cuda_uplo = uplo_to_gpu(uplo);
 
     using scalar_type = get_scalar_type<VectorLikeA>;
 
-    #ifdef HALA_ENABLE_CUDA
     cuda_call_backend<scalar_type>(cublasStrttp, cublasDtrttp, cublasCtrttp, cublasZtrttp,
         "GPU-BLAS::Xtrttp()", engine, cuda_uplo, N, convert(A), lda, cconvert(AP));
     #endif

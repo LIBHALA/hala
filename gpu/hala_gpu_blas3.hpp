@@ -93,16 +93,8 @@ inline void trsm(gpu_engine const &engine, char side, char uplo, char trans, cha
                       "GPU-BLAS::Xtrsm()", engine, cuda_side, cuda_uplo, cuda_trans, cuda_diag, M, N, palpha, convert(A), lda, cconvert(B), ldb);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // the complex case is not working properly
-    if (not is_complex<scalar_type>::value){
         rocm_call_backend<scalar_type>(rocblas_strsm, rocblas_dtrsm, rocblas_ctrsm, rocblas_ztrsm,
                         "rocBlas::Xtrsm()", engine, cuda_side, cuda_uplo, cuda_trans, cuda_diag, M, N, palpha, convert(A), lda, cconvert(B), ldb);
-    }else{
-        auto cA = engine.unload(A);
-        auto cB = engine.unload(B);
-        trsm(side, uplo, trans, diag, M, N, alpha, cA, lda, cB, ldb);
-        gpu_copy_n<copy_direction::host2device>(get_data(cB), ldb * N, get_data(B));
-    }
     #endif
 }
 
@@ -205,16 +197,10 @@ inline void symm(gpu_engine const &engine, char side, char uplo, int M, int N, F
                        convert(A), lda, convert(B), ldb, pbeta, cconvert(C), ldc);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // missing rocm-3.3.0
-//     rocm_call_backend6<conjugate, scalar_type>(rocblas_ssymm, rocblas_dsymm, rocblas_chemm, rocblas_zhemm,
-//                                                rocblas_csymm, rocblas_zsymm,
-//                        "rocBlas::Xsymm()/Xhemm()", engine, cuda_side, cuda_uplo, M, N, palpha,
-//                        convert(A), lda, convert(B), ldb, pbeta, cconvert(C), ldc);
-    auto cA = engine.unload(A);
-    auto cB = engine.unload(B);
-    auto cC = engine.unload(C);
-    symm<conjugate>(side, uplo, M, N, alpha, cA, lda, cB, ldb, beta, cC, ldc);
-    gpu_copy_n<copy_direction::host2device>(get_data(cC), ldc * N, get_data(C));
+    rocm_call_backend6<conjugate, scalar_type>(rocblas_ssymm, rocblas_dsymm, rocblas_chemm, rocblas_zhemm,
+                                               rocblas_csymm, rocblas_zsymm,
+                       "rocBlas::Xsymm()/Xhemm()", engine, cuda_side, cuda_uplo, M, N, palpha,
+                       convert(A), lda, convert(B), ldb, pbeta, cconvert(C), ldc);
     #endif
 }
 

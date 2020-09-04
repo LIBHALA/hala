@@ -150,18 +150,17 @@ inline void sbmv(gpu_engine const &engine, char uplo, int N, int k, FSa alpha, c
     }
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // fallback: rocblas_ssbmv(), rocblas_dsbmv(), rocblas_chbmv() and rocblas_zhbmv() don't work as of 2.18/3.3.0
-//     if __HALA_CONSTEXPR_IF__ (is_float<scalar_type>::value || is_double<scalar_type>::value){
-//         rocm_call_backend<scalar_type>(rocblas_ssbmv, rocblas_dsbmv, rocblas_chbmv, rocblas_zhbmv,
-//                         "rocBlas::Xsbmv()", engine, cuda_uplo, N, k, palpha, convert(A), lda, convert(x), incx, pbeta, cconvert(y), incy);
-//     }else{
+    if __HALA_CONSTEXPR_IF__ (is_float<scalar_type>::value || is_double<scalar_type>::value){
+        rocm_call_backend<scalar_type>(rocblas_ssbmv, rocblas_dsbmv, rocblas_chbmv, rocblas_zhbmv,
+                         "rocBlas::Xsbmv()", engine, cuda_uplo, N, k, palpha, convert(A), lda, convert(x), incx, pbeta, cconvert(y), incy);
+    }else{
         // fallback mode, using the CPU version with data-movement
         auto cpuA = engine.unload(A);
         auto cpux = engine.unload(x);
         auto cpuy = engine.unload(y);
         hala::sbmv<conjugate>(uplo, N, k, *((scalar_type const*) palpha), cpuA, lda, cpux, incx, *((scalar_type const*) pbeta), cpuy, incy);
         gpu_copy_n<copy_direction::host2device>(get_data(cpuy), get_size(y), get_data(y));
-//    }
+    }
     #endif
 }
 
@@ -357,13 +356,8 @@ inline void tbmv(gpu_engine const &engine, char uplo, char trans, char diag, int
                       "GPU-BLAS::Xtbmv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // fallback: bugged as of 3.3.0, fixed in future
-//     rocm_call_backend<scalar_type>(rocblas_stbmv, rocblas_dtbmv, rocblas_ctbmv, rocblas_ztbmv,
-//                       "rocBlas::Xtbmv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
-    auto cA = engine.unload(A);
-    auto cx = engine.unload(x);
-    tbmv(uplo, trans, diag, N, k, cA, lda, cx, incx);
-    gpu_copy_n<copy_direction::host2device>(get_data(cx), get_size(x), get_data(x));
+    rocm_call_backend<scalar_type>(rocblas_stbmv, rocblas_dtbmv, rocblas_ctbmv, rocblas_ztbmv,
+                      "rocBlas::Xtbmv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, k, convert(A), lda, cconvert(x), incx);
     #endif
 }
 
