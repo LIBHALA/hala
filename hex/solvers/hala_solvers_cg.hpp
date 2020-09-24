@@ -200,12 +200,17 @@ int solve_cg(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
 
     int nrows = get_size_int(pntr) - 1;
 
+    auto matrix = make_sparse_matrix(nrows, pntr, indx, vals);
+    size_t bsize =  sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 0.0, x);
+    auto work_buffer = new_vector(x);
+    set_size(bsize, work_buffer);
+
     return solve_cg_core<scalar_type>(precon,
                 [&](VectorLikeX const &v, temp_vector &r)->void{
-                    sparse_gemv('N', nrows, nrows, 1.0, pntr, indx, vals, v, 0.0, hala::bind_engine_vector(pntr.engine(), r.vector()) );
+                    sparse_gemv(matrix, 'N', 1.0, v, 0.0, hala::bind_engine_vector(vals.engine(), r.vector()), work_buffer);
                 },
                 [&](temp_vector const &v, temp_vector &r)->void{
-                    sparse_gemv('N', nrows, nrows, 1.0, pntr, indx, vals, v, 0.0, r);
+                    sparse_gemv(matrix, 'N', 1.0, v, 0.0, r, work_buffer);
                 },
                 b, x,
                 []()->scalar_type{ return get_cast<scalar_type>(0); },

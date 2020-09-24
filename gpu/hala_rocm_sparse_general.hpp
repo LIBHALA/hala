@@ -172,14 +172,14 @@ public:
         gemv(trans, alpha, x, beta, y, gpu_vector<value_type>(rengine.device()));
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC&, int){
+    size_t gemm_buffer_size(char, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC&, int) const{
         if (is_complex<value_type>::value and trans_to_rocm_sparse<value_type>(transb) == rocsparse_operation_conjugate_transpose){
             return hala_size(b_rows, b_cols) * sizeof(value_type);
         }
         return 0;
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp) const{
         check_types(rvals, B, C);
         rengine.check_gpu(B, C);
         int M = (is_n(transa)) ? rows : cols;
@@ -206,7 +206,7 @@ public:
         }
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc) const{
         size_t work = gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc);
         gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc, gpu_vector<value_type>(work / sizeof(value_type) + 1, rengine.device()));
     }

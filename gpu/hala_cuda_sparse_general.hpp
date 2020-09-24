@@ -310,7 +310,7 @@ public:
     }
     //! \brief Returns the workspace size (in bytes) for a matrix-matrix product.
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc){
+    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc) const{
         check_types(rvals, B, C);
         rengine.check_gpu(B, C);
         int M = (is_n(transa)) ? rows : cols;
@@ -334,7 +334,7 @@ public:
     }
     //! \brief Performs matrix-matrix product with external workspace buffer, see hala::sparse_gemv().
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp) const{
         check_types(rvals, B, C);
         rengine.check_gpu(B, C);
         int M = (is_n(transa)) ? rows : cols;
@@ -394,7 +394,7 @@ public:
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
     size_t gemv_buffer_size(char, FPa, VectorLikeX const&, FPb, VectorLikeY&) const{ return 0; }
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
-    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &y){
+    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &y) const{
         check_types(rvals, x, y);
         rengine.check_gpu(x, y);
         pntr_check_set_size(beta, y, (is_n(trans)) ? rows : cols, 1);
@@ -408,11 +408,11 @@ public:
                       pconvert(rvals), rpntr, rindx, convert(x), pbeta, convert(y));
     }
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
-    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&){
+    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&) const{
         gemv(trans, alpha, x, beta, y);
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC &, int){
+    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC &, int) const{
         int N = (is_n(transb)) ? b_cols : b_rows;
         int K = (is_n(transa)) ? cols : rows;
         if (is_n(transa))
@@ -421,7 +421,7 @@ public:
             return (is_n(transb)) ? 0 : hala_size(N, K) * sizeof(value_type);
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp) const{
         check_types(rvals, B, C);
         rengine.check_gpu(B, C);
         int M = (is_n(transa)) ? rows : cols;
@@ -475,7 +475,7 @@ public:
     #endif
     //! \brief Performs matrix-matrix product, see hala::sparse_gemv().
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc) const{
         size_t work = gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc);
         gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc, gpu_vector<value_type>(work / sizeof(value_type) + 1, rengine.device()));
     }
@@ -497,7 +497,7 @@ protected:
     template<typename FSA, typename FSB>
     size_t get_gemm_buffer(cusparseOperation_t transa, cusparseOperation_t transb,
                            FSA alpha, cuda_struct_description<cusparseDnMatDescr_t> const &bdesc,
-                           FSB beta, cuda_struct_description<cusparseDnMatDescr_t> const &cdesc){
+                           FSB beta, cuda_struct_description<cusparseDnMatDescr_t> const &cdesc) const{
         #if (__HALA_CUDA_API_VERSION__ < 11000)
         constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_MM_ALG_DEFAULT;
         #else

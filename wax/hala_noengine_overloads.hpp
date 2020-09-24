@@ -625,7 +625,45 @@ inline void sparse_gemm(char transa, char transb, int M, int N, int K,
     sparse_gemm(transa, transb, M, N, K, alpha, pntr, indx, vals, B, ldb, beta, std::forward<engined_vector<cengine, VectorLikeC>>(C), ldc);
 }
 
+template<class cengine, typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+size_t sparse_gemv_buffer_size(MatrixType const &matrix, char trans, FPa alpha, engined_vector<cengine, VectorLikeX> const &x, FPb beta, engined_vector<cengine, VectorLikeY> __HALA_REFREF y){
+    return matrix.gemv_buffer_size(trans, alpha, x.vector(), beta, y.vector());
+}
+template<class cengine, typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, engined_vector<cengine, VectorLikeX> const &x, FPb beta, engined_vector<cengine, VectorLikeY> __HALA_REFREF y){
+    matrix.gemv(trans, alpha, x.vector(), beta, y.vector());
+}
+template<class cengine, typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, engined_vector<cengine, VectorLikeX> const &x, FPb beta, engined_vector<cengine, VectorLikeY> __HALA_REFREF y, engined_vector<cengine, VectorLikeBuff> &temp){
+    matrix.gemv(trans, alpha, x.vector(), beta, y.vector(), temp.vector());
+}
+template<class cengine, typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, engined_vector<cengine, VectorLikeX> const &x, FPb beta, engined_vector<cengine, VectorLikeY> __HALA_REFREF y, engined_vector<cengine, VectorLikeBuff> &&temp){
+    matrix.gemv(trans, alpha, x.vector(), beta, y.vector(), temp.vector());
+}
+template<class cengine, typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+size_t sparse_gemm_buffer_size(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, engined_vector<cengine, VectorLikeB> const &B, int ldb, FSB beta, engined_vector<cengine, VectorLikeC> __HALA_REFREF C, int ldc){
+    return matrix.gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B.vector(), ldb, beta, C.vector(), ldc);
+}
+template<class cengine, typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeBuff>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, engined_vector<cengine, VectorLikeB> const &B, int ldb, FSB beta, engined_vector<cengine, VectorLikeC> __HALA_REFREF C, int ldc, engined_vector<cengine, VectorLikeBuff> &temp){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B.vector(), ldb, beta, C.vector(), ldc, temp.vector());
+}
+template<class cengine, typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeBuff>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, engined_vector<cengine, VectorLikeB> const &B, int ldb, FSB beta, engined_vector<cengine, VectorLikeC> __HALA_REFREF C, int ldc, engined_vector<cengine, VectorLikeBuff> &&temp){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B.vector(), ldb, beta, C.vector(), ldc, temp.vector());
+}
+template<class cengine, typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, engined_vector<cengine, VectorLikeB> const &B, int ldb, FSB beta, engined_vector<cengine, VectorLikeC> __HALA_REFREF C, int ldc){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B.vector(), ldb, beta, C.vector(), ldc);
+}
+
 #ifdef __HALA_NOENGINE_OVERLOADS_HPP_PASS1
+template<class cengine, class VectorLikeP, class VectorLikeI, class VectorLikeV>
+auto make_sparse_matrix(int num_cols, engined_vector<cengine, VectorLikeP> const &pntr,
+                                      engined_vector<cengine, VectorLikeI> const &indx, engined_vector<cengine, VectorLikeV> const &vals){
+    return make_sparse_matrix(vals.engine(), num_cols, pntr.vector(), indx.vector(), vals.vector());
+}
 template<class cengine, class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_triangular_matrix(char uplo, char diag,
                             engined_vector<cengine, VectorLikeP> const &pntr, engined_vector<cengine, VectorLikeI> const &indx,

@@ -87,12 +87,17 @@ int solve_batch_cg(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
 
     int nrows = get_size_int(pntr) - 1;
 
+    auto matrix = make_sparse_matrix(nrows, pntr, indx, vals);
+    size_t bsize =  sparse_gemm_buffer_size(matrix, 'N', 'N', nrows, num_rhs, 1.0, B, nrows, 0.0, X, nrows);
+    auto work_buffer = new_vector(X);
+    set_size(bsize, work_buffer);
+
     return solve_cg_core<scalar_type>(precon,
                 [&](VectorLikeX const &v, temp_vector &r)->void{
-                    sparse_gemm('N', 'N', nrows, num_rhs, nrows, 1.0, pntr, indx, vals, v, nrows, 0.0, r, nrows);
+                    sparse_gemm(matrix, 'N', 'N', nrows, num_rhs, 1.0, v, nrows, 0.0, r, nrows, work_buffer);
                 },
                 [&](temp_vector const &v, temp_vector &r)->void{
-                    sparse_gemm('N', 'N', nrows, num_rhs, nrows, 1.0, pntr, indx, vals, v, nrows, 0.0, r, nrows);
+                    sparse_gemm(matrix, 'N', 'N', nrows, num_rhs, 1.0, v, nrows, 0.0, r, nrows, work_buffer);
                 },
                 B, X,
                 [&]()->scalar_type{ return new_vector(X); },

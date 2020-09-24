@@ -110,15 +110,15 @@ struct cpu_sparse_matrix{
 
     //! \brief Returns 0, added for consistency with CUDA and ROCM.
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char, char, int, int, FSA, VectorLikeB const&, int, FSB, VectorLikeC&&, int){ return 0; }
+    size_t gemm_buffer_size(char, char, int, int, FSA, VectorLikeB const&, int, FSB, VectorLikeC&&, int) const{ return 0; }
     //! \brief Matrix-matrix product.
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc, VectorLikeT &&){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc, VectorLikeT &&) const{
         gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc);
     }
     //! \brief Matrix-matrix product.
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc) const{
         check_types(rvals, B, C);
         int M = (is_n(transa)) ? rows : cols;
         int N = (is_n(transb)) ? b_cols : b_rows;
@@ -165,6 +165,35 @@ template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_sparse_matrix(cpu_engine const&, int num_cols, VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals){
     return make_sparse_matrix(num_cols, pntr, indx, vals);
 }
+
+#ifndef __HALA_DOXYGEN_SKIP
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+size_t sparse_gemv_buffer_size(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
+    return matrix.gemv_buffer_size(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
+}
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
+    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
+}
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&temp){
+    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y), std::forward<VectorLikeBuff>(temp));
+}
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+size_t sparse_gemm_buffer_size(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
+    return matrix.gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
+}
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeBuff>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc, VectorLikeBuff &&temp){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc, std::forward<VectorLikeBuff>(temp));
+}
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
+}
+#endif
+
+
 
 /*!
  * \ingroup HALASPARSE
