@@ -152,6 +152,13 @@ auto make_ilu(cpu_engine const &cengine, VectorLikeP const &pntr, VectorLikeI co
     return cpu_ilu<standard_type>(cengine, pntr, indx, vals, policy);
 }
 
+#ifndef __HALA_DOXYGEN_SKIP
+template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
+auto make_ilu(VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals, char policy){
+    return make_ilu(cpu_engine(), pntr, indx, vals, policy);
+}
+#endif
+
 
 }
 

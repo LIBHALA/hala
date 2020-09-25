@@ -207,7 +207,7 @@ int solve_cg(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
 
     return solve_cg_core<scalar_type>(precon,
                 [&](VectorLikeX const &v, temp_vector &r)->void{
-                    sparse_gemv(matrix, 'N', 1.0, v, 0.0, hala::bind_engine_vector(vals.engine(), r.vector()), work_buffer);
+                    sparse_gemv(matrix, 'N', 1.0, v, 0.0, r, work_buffer);
                 },
                 [&](temp_vector const &v, temp_vector &r)->void{
                     sparse_gemv(matrix, 'N', 1.0, v, 0.0, r, work_buffer);
