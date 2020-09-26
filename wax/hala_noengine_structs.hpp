@@ -289,6 +289,10 @@ template<class cengine, class vec>
 void set_zero(size_t num_entries, engined_vector<cengine, vec> &x){
     set_zero(x.engine(), num_entries, x.vector());
 }
+template<class cengine, class vec>
+void set_size(size_t num_entries, engined_vector<cengine, vec> &x){
+    set_size(num_entries, x.vector());
+}
 
 template<class vec>
 auto new_vector(vec const &x){

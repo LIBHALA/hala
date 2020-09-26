@@ -157,6 +157,11 @@ solve_gmres(compute_engine const &engine,
     int total_iterations = 0;
     int outer_iterations = 0;
 
+    auto matrix = make_sparse_matrix(engine, num_rows, pntr, indx, vals);
+    size_t bsize =  sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 1.0, x);
+    auto work_buffer = new_vector(x);
+    set_size(bsize, work_buffer);
+
     while((outer_res > stop.tol) && (outer_iterations < stop.max_iter)){
         H.resize(0); S.resize(0); C.resize(0); Z.resize(0);
 
@@ -164,7 +169,7 @@ solve_gmres(compute_engine const &engine,
         auto r = new_vector(engine, vals);
 
         vcopy(engine, b, t);
-        sparse_gemv(engine, 'N', num_rows, num_rows, -1.0, pntr, indx, vals, x, 1.0, t);
+        matrix.gemv('N', -1.0, x, 1.0, t, work_buffer);
         precon(t, r);
         total_iterations++;
 
@@ -179,7 +184,7 @@ solve_gmres(compute_engine const &engine,
         int inner_iterations = 0;
         while ((inner_res > stop.tol) && (inner_iterations < restart)){
 
-            sparse_gemv(engine, 'N', num_rows, num_rows, 1.0, pntr, indx, vals, r, 0.0, t);
+            matrix.gemv('N', 1.0, r, 0.0, t, work_buffer);
             precon(t, r);
             total_iterations++;
 
