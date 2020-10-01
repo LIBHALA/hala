@@ -245,7 +245,7 @@ solve_cg(compute_engine const &engine,
                     }, bb, xx);
 }
 
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int solve_cg(mixed_engine const &engine,
          stop_criteria<get_precision_type<VectorLikeV>> const &stop,
@@ -323,7 +323,7 @@ solve_cg_ilu(compute_engine const &engine,
     return solve_cg_ilu(stop, p, i, v, ilu, bb, xx);
 }
 
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int solve_cg_ilu(mixed_engine const &engine,
                  stop_criteria<get_precision_type<VectorLikeV>> const &stop,
