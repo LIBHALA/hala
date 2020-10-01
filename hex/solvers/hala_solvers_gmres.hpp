@@ -62,7 +62,7 @@ void krylov_combine(cpu_engine const&, int num_rows, int num_basis, VectorLikeW 
 }
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section (overloads are documented with the main methods)
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLike, class VectorLikeResult>
 void krylov_project(gpu_engine const &engine, int num_rows, int num_basis, VectorLike &r, VectorLike const &W, VectorLikeResult &coeffs){
     auto tmp = new_vector(engine, r);
@@ -265,7 +265,7 @@ solve_gmres_ilu(compute_engine const &engine,
 }
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section (overloads are documented with the main methods)
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int solve_gmres(mixed_engine const &engine,
                 stop_criteria<get_precision_type<VectorLikeV>> const &stop, int restart,

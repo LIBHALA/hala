@@ -48,7 +48,7 @@ int main(int argc, char**){
 
     for(auto const &test : all_tests) perform(test);
 
-    #ifdef HALA_ENABLE_CUDA
+    #ifdef HALA_ENABLE_GPU
     for(int gpuid=0; gpuid<hala::gpu_device_count(); gpuid++){
         begin_report(std::string("Testing GPU SOLVERS: device ") + std::to_string(gpuid));
 

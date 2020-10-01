@@ -131,7 +131,7 @@ solve_batch_cg(compute_engine const &engine,
                                 precon(inx.vector(), outr.vector());
                           }, BB, XX);
 }
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int
 solve_batch_cg(mixed_engine const &engine,
@@ -207,7 +207,7 @@ solve_batch_cg_ilu(compute_engine const &engine,
     return hala::solve_batch_cg_ilu(stop, p, i, v, ilu, BB, XX);
 }
 
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int solve_batch_cg_ilu(mixed_engine const &engine,
              stop_criteria<get_precision_type<VectorLikeV>> const &stop,
@@ -220,7 +220,7 @@ int solve_batch_cg_ilu(mixed_engine const &engine,
     auto gX = gpu_bind_vector(engine.gpu(), X);
     return solve_batch_cg_ilu(engine.gpu(), stop, gpntr, gindx, gvals, ilu.cilu(), gB, gX);
 }
-#endif // end CUDA
+#endif
 
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV,
          class VectorLikeX, class VectorLikeB>

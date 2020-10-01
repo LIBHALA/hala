@@ -192,7 +192,7 @@ struct engined_vector{
         return true;
     }
 
-    #if defined(HALA_ENABLE_CUDA) || defined(HALA_ENABLE_ROCM)
+    #ifdef HALA_ENABLE_GPU
     template<class vec2, class ce = cengine>
     std::enable_if_t<std::is_same<ce, gpu_engine>::value, bool>
     engine_match(engined_vector<cengine, vec2> const &other) const{

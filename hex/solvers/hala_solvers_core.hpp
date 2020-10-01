@@ -85,7 +85,7 @@ struct define_preconditioner{
                                    )>;
 };
 
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 /*!
  * \internal
  * \ingroup HALASOLVERS

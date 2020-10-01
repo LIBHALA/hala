@@ -45,13 +45,13 @@ void test_cg(cengine const &engine){
     hala::solve_cg_ilu(engine, (std::is_same<precision_type, float>::value) ? 1.E-4 : 1.E-9,
                        pntr, indx, vals, ilu, b, x);
 
-    hassert(testvec(x, xref)); // approximate solver
+    hassert(testvec(x, xref, hala::norm2(xref))); // approximate solver
 
     x = {1.0, 3.0, -4.0, -7.0, 11.0}; // pick a random vector
     hala::solve_cg_ilu(engine, (std::is_same<precision_type, float>::value) ? 1.E-4 : 1.E-9,
                        pntr, indx, vals, b, x);
 
-    hassert(testvec(x, xref)); // approximate solver (factorization behind the scene)
+    hassert(testvec(x, xref, hala::norm2(xref))); // approximate solver (factorization behind the scene)
 }
 
 template<typename T, class cengine>

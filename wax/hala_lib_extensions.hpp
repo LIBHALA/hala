@@ -79,7 +79,7 @@ struct mixed_engine{
     template<typename T> using dfvector = typename std::vector<T>;
 
     //! \brief Holds a reference to a gpu_engine.
-    gpu_engine const &cengine;
+    gpu_engine cengine;
 
     //! \brief Return a copy of the vector using an member function for the engine.
     template<typename VectorLike> auto vcopy(VectorLike const &x) const;
@@ -252,7 +252,7 @@ auto make_sparse_matrix(mixed_engine const &engine, int num_cols, VectorLikeP co
  * The matrix is constructed from vectors on the CPU, the vectors are loaded
  * in hala::gpu_vector containers and the loaded data is used to construct
  * a triangular matrix bound on the GPU.
- * The struct owns the CUDA data but does not keep references to the CPU data.
+ * The struct owns the GPU data but does not keep references to the CPU data.
  */
 template<typename T>
 struct mixed_tiangular_matrix{
@@ -278,14 +278,14 @@ struct mixed_tiangular_matrix{
     //! \brief The matrix is trivially movable.
     mixed_tiangular_matrix(mixed_tiangular_matrix &&other) = default;
 
-    //! \brief Get the CUDA triangular matrix.
+    //! \brief Get the GPU triangular matrix.
     gpu_triangular_matrix<T> const& gpu_tri() const{ return tri; }
 
-    //! \brief Holds the loaded gpu data for the pntr (the cuda matrix alias this vector).
+    //! \brief Holds the loaded gpu data for the pntr (the gpu matrix alias this vector).
     gpu_vector<int> gpu_pntr;
-    //! \brief Holds the loaded gpu data for the indx (the cuda matrix alias this vector).
+    //! \brief Holds the loaded gpu data for the indx (the gpu matrix alias this vector).
     gpu_vector<int> gpu_indx;
-    //! \brief Holds the loaded gpu data for the vals (the cuda matrix alias this vector).
+    //! \brief Holds the loaded gpu data for the vals (the gpu matrix alias this vector).
     gpu_vector<T> gpu_vals;
 
     //! \brief The CUDA triangular matrix.
@@ -326,7 +326,7 @@ template<typename T> struct mixed_ilu{
     //! \brief Constructor, performs the lower-upper factorization.
     template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
     mixed_ilu(mixed_engine const &eng, VectorLikeP const &mpntr, VectorLikeI const &mindx, VectorLikeV const &mvals, char policy)
-        : rengine(std::ref(eng)), num_rows(get_size_int(mpntr) - 1),
+        : rengine(eng), num_rows(get_size_int(mpntr) - 1),
         gpu_pntr(eng.gpu().load(mpntr)), gpu_indx(eng.gpu().load(mindx)),
         gilu(eng.gpu(), gpu_pntr, gpu_indx, eng.gpu().load(mvals), policy){}
 
@@ -349,20 +349,20 @@ template<typename T> struct mixed_ilu{
         check_types(x, r);
         check_set_size(assume_output, r, num_rhs, num_rows);
 
-        auto gx = engine().gpu().load(x);
-        auto gr = new_vector(engine().gpu(), r);
+        auto gx = rengine.gpu().load(x);
+        auto gr = new_vector(rengine.gpu(), r);
         gilu.apply(gx, gr, num_rhs);
         gr.unload(r);
     }
 
     //! \brief Returns the associated engine reference.
-    mixed_engine const& engine() const{ return rengine.get(); }
+    mixed_engine const& engine() const{ return rengine; }
 
     //! \brief Returns a reference to the internal hala::gpu_ilu.
     gpu_ilu<value_type> const& cilu() const{ return gilu; }
 
 private:
-    std::reference_wrapper<mixed_engine const> rengine;
+    mixed_engine rengine;
 
     int num_rows;
     gpu_vector<int> gpu_pntr, gpu_indx;
