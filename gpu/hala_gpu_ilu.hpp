@@ -54,31 +54,31 @@ template<typename T> struct gpu_ilu{
     //! \brief Constructor, performs the lower-upper factorization.
     template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
     gpu_ilu(gpu_engine const &cengine, VectorLikeP const &mpntr, VectorLikeI const &mindx, VectorLikeV const &mvals, char policy)
-        : rengine(std::ref(cengine)), ilu(rengine.get().device()),
+        : rengine(cengine), ilu(rengine.device()),
         num_rows(get_size_int(mpntr)-1), nnz(get_size_int(mindx)){
 
         cusparseSolvePolicy_t rpolicy = ((policy == 'L') || (policy == 'l')) ? CUSPARSE_SOLVE_POLICY_USE_LEVEL : CUSPARSE_SOLVE_POLICY_NO_LEVEL;
 
         auto descM = make_cuda_mat_description('G', 'S', 'S');
 
-        hala::vcopy(engine(), mvals, ilu);
+        hala::vcopy(rengine, mvals, ilu);
 
         int buff_size = 0;
         cuda_call_backend<value_type>(cusparseScsrilu02_bufferSize, cusparseDcsrilu02_bufferSize, cusparseCcsrilu02_bufferSize, cusparseZcsrilu02_bufferSize,
-                          "cuSparse::Xcsrilu02_bufferSize()", engine(), num_rows, nnz, descM, convert(ilu), convert(mpntr), convert(mindx), infoM, &buff_size);
+                          "cuSparse::Xcsrilu02_bufferSize()", rengine, num_rows, nnz, descM, convert(ilu), convert(mpntr), convert(mindx), infoM, &buff_size);
 
-        auto f77_buffer = make_gpu_vector<int>(buff_size / sizeof(int), engine().device());
+        auto work_buffer = make_gpu_vector<int>(buff_size / sizeof(int), rengine.device());
 
         cuda_call_backend<value_type>(cusparseScsrilu02_analysis, cusparseDcsrilu02_analysis, cusparseCcsrilu02_analysis, cusparseZcsrilu02_analysis,
-                          "cuSparse::Xcsrilu02_analysis()", engine(), num_rows, nnz, descM,
-                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(f77_buffer));
+                          "cuSparse::Xcsrilu02_analysis()", rengine, num_rows, nnz, descM,
+                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(work_buffer));
 
         cuda_call_backend<value_type>(cusparseScsrilu02, cusparseDcsrilu02, cusparseCcsrilu02, cusparseZcsrilu02,
-                          "cuSparse::Xcsrilu02()", engine(), num_rows, nnz, descM,
-                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(f77_buffer));
+                          "cuSparse::Xcsrilu02()", rengine, num_rows, nnz, descM,
+                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(work_buffer));
 
-        upper = std::make_unique<gpu_triangular_matrix<value_type>>(cengine, 'U', 'N', mpntr, mindx, ilu, policy);
-        lower = std::make_unique<gpu_triangular_matrix<value_type>>(cengine, 'L', 'U', mpntr, mindx, ilu, policy);
+        upper = std::make_unique<gpu_triangular_matrix<value_type>>(rengine, 'U', 'N', mpntr, mindx, ilu, policy);
+        lower = std::make_unique<gpu_triangular_matrix<value_type>>(rengine, 'L', 'U', mpntr, mindx, ilu, policy);
     }
 
     //! \brief Destructor, nothing to do in the cpu case.
@@ -119,13 +119,12 @@ template<typename T> struct gpu_ilu{
     }
 
     //! \brief Returns the associated engine reference.
-    gpu_engine const& engine() const{ return rengine.get(); }
+    gpu_engine const& engine() const{ return rengine; }
 
 private:
-    std::reference_wrapper<gpu_engine const> rengine;
+    gpu_engine rengine;
 
     cuda_struct_description<csrilu02Info_t> infoM;
-    cuda_struct_description<csrsv2Info_t> infoL, infoU;
 
     gpu_vector<value_type> ilu;
 
