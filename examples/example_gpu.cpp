@@ -281,7 +281,7 @@ int solve_pcg(EngineType const &engine,
 //! [Example_02 pcge]
 
 //! [Example_02 pcgm]
-#ifdef HALA_ENABLE_CUDA
+#ifdef HALA_ENABLE_GPU
 template<class VectorLikeP,  class VectorLikeI, class VectorLikeV, class VectorLikeX, class VectorLikeB>
 int solve_pcg(hala::mixed_engine const &engine,
               int max_iter, hala::get_precision_type<VectorLikeV> stop_tolerance,
@@ -330,7 +330,7 @@ int main(int, char**){
     }
     //! [Example_02 main_cpu]
 
-    #ifdef HALA_ENABLE_CUDA
+    #ifdef HALA_ENABLE_GPU
     cout << "\nCompute using the GPU\n";
     cout << setw(5) << "iter" << setw(10) << "duration"
          << setw(10) << "size" << setw(15) << "error" << "\n";
@@ -372,7 +372,7 @@ int main(int, char**){
          << setw(10) << "size" << setw(15) << "error" << "\n";
 
     //! [Example_02 main_gpm]
-    #ifdef HALA_ENABLE_CUDA
+    #ifdef HALA_ENABLE_GPU
     hala::mixed_engine engine(egpu);
     #else
     hala::cpu_engine engine;
