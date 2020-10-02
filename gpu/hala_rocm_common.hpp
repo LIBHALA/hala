@@ -171,6 +171,24 @@ inline rocblas_operation trans_to_gpu(char trans){
 
 /*!
  * \ingroup HALAROCMCOMMON
+ * \brief Converts trans character to one compatible with rocsparse hermitian operations.
+ *
+ * Several Hermitian operations, e.g., hala::syrk(), use a trans character to indicate
+ * a side of an operation and not necessarily the conjugate vs. non-conjugate component of the transpose.
+ * But this hinters writing generic code, since different character has to be passed in
+ * based on the scalar-type. This method corrects for that.
+ */
+template<bool conjugate, typename scalar_type>
+rocblas_operation hermitian_trans(char &trans){
+    if __HALA_CONSTEXPR_IF__ (conjugate and is_complex<scalar_type>::value){
+        return (is_n(trans)) ? rocblas_operation_none : rocblas_operation_conjugate_transpose;
+    }else{
+        return (is_n(trans)) ? rocblas_operation_none : rocblas_operation_transpose;
+    }
+}
+
+/*!
+ * \ingroup HALAROCMCOMMON
  * \brief Converts characters L, R (upper or lower) to the correct rocblas_side.
  */
 inline rocblas_side side_to_gpu(char side){

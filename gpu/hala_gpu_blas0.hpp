@@ -125,27 +125,8 @@ inline void dgmm(gpu_engine const &engine, char side, int M, int N, VectorLikeA 
         "GPU-BLAS::Xdgmm()", engine, gpu_side, M, N, convert(A), lda, convert(x), incx, cconvert(C), ldc);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    // as of rocblas 3.5 dgmm is bugged, see https://github.com/ROCmSoftwarePlatform/rocBLAS/issues/1160
-    // fixed in develop, but the fix didn't make it to 3.7, keep fingers crosses for 3.9
-//     rocm_call_backend<scalar_type>(rocblas_sdgmm, rocblas_ddgmm, rocblas_cdgmm, rocblas_zdgmm,
-//         "GPU-BLAS::Xdgmm()", engine, gpu_side, M, N, convert(A), lda, convert(x), incx, cconvert(C), ldc);
-    if (gpu_side == rocblas_side_left){
-        if (incx == 1){
-            for(int i=0; i<N; i++)
-                gbmv(engine, 'N', M, M, 0, 0, 1.0, x, 1, get_data(A) + i * lda, 1, 0.0, get_data(C) + i * ldc, 1);
-        }else{
-            gpu_vector<scalar_type> xcont;
-            vcopy(engine, M, x, incx, xcont, 1);
-            for(int i=0; i<N; i++)
-                gbmv(engine, 'N', M, M, 0, 0, 1.0, xcont, 1, get_data(A) + i * lda, 1, 0.0, get_data(C) + i * ldc, 1);
-        }
-    }else{
-        gpu_pntr<device_pntr> using_device_pntr(engine);
-        for(int i=0; i<N; i++){
-            vcopy(engine, M, get_data(A) + i * lda, 1, get_data(C) + i * ldc, 1);
-            scal(engine, M, get_data(x) + i * incx, get_data(C) + i * ldc, 1);
-        }
-    }
+    rocm_call_backend<scalar_type>(rocblas_sdgmm, rocblas_ddgmm, rocblas_cdgmm, rocblas_zdgmm,
+       "GPU-BLAS::Xdgmm()", engine, gpu_side, M, N, convert(A), lda, convert(x), incx, cconvert(C), ldc);
     #endif
 }
 
