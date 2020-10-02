@@ -93,8 +93,8 @@ inline void trsm(gpu_engine const &engine, char side, char uplo, char trans, cha
                       "GPU-BLAS::Xtrsm()", engine, cuda_side, cuda_uplo, cuda_trans, cuda_diag, M, N, palpha, convert(A), lda, cconvert(B), ldb);
     #endif
     #ifdef HALA_ENABLE_ROCM
-        rocm_call_backend<scalar_type>(rocblas_strsm, rocblas_dtrsm, rocblas_ctrsm, rocblas_ztrsm,
-                        "rocBlas::Xtrsm()", engine, cuda_side, cuda_uplo, cuda_trans, cuda_diag, M, N, palpha, convert(A), lda, cconvert(B), ldb);
+    rocm_call_backend<scalar_type>(rocblas_strsm, rocblas_dtrsm, rocblas_ctrsm, rocblas_ztrsm,
+                      "rocBlas::Xtrsm()", engine, cuda_side, cuda_uplo, cuda_trans, cuda_diag, M, N, palpha, convert(A), lda, cconvert(B), ldb);
     #endif
 }
 
@@ -114,22 +114,17 @@ inline void syrk(gpu_engine const &engine, char uplo, char trans, int N, int K, 
     auto palpha = get_pointer<scalar_type>(alpha);
     auto pbeta  = get_pointer<scalar_type>(beta);
 
-    auto cuda_uplo  = uplo_to_gpu(uplo);
+    auto gpu_uplo  = uplo_to_gpu(uplo);
 
     #ifdef HALA_ENABLE_CUDA
-    auto cuda_trans = trans_to_gpu(trans);
+    auto gpu_trans = trans_to_gpu(trans);
     cuda_call_backend6<conjugate, scalar_type>(cublasSsyrk, cublasDsyrk, cublasCherk, cublasZherk, cublasCsyrk, cublasZsyrk,
-                       "GPU-BLAS::Xsyrk()/Xherk()", engine, cuda_uplo, cuda_trans, N, K, palpha, convert(A), lda, pbeta, cconvert(C), ldc);
+                       "GPU-BLAS::Xsyrk()/Xherk()", engine, gpu_uplo, gpu_trans, N, K, palpha, convert(A), lda, pbeta, cconvert(C), ldc);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    if __HALA_CONSTEXPR_IF__ (conjugate and is_complex<scalar_type>::value){
-        if (trans == 'T' or trans == 't') trans = 'C';
-    }else{
-        if (trans == 'C' or trans == 'c') trans = 'T';
-    }
-    auto cuda_trans = trans_to_gpu(trans);
+    auto gpu_trans = hermitian_trans<conjugate, scalar_type>(trans);
     rocm_call_backend6<conjugate, scalar_type>(rocblas_ssyrk, rocblas_dsyrk, rocblas_cherk, rocblas_zherk, rocblas_csyrk, rocblas_zsyrk,
-                       "rocBlas::Xsyrk()/Xherk()", engine, cuda_uplo, cuda_trans, N, K, palpha, convert(A), lda, pbeta, cconvert(C), ldc);
+                       "rocBlas::Xsyrk()/Xherk()", engine, gpu_uplo, gpu_trans, N, K, palpha, convert(A), lda, pbeta, cconvert(C), ldc);
     #endif
 }
 
@@ -149,25 +144,20 @@ inline void syr2k(gpu_engine const &engine, char uplo, char trans, int N, int K,
     auto palpha = get_pointer<scalar_type>(alpha);
     auto pbeta  = get_pointer<scalar_type>(beta);
 
-    auto cuda_uplo  = uplo_to_gpu(uplo);
+    auto gpu_uplo  = uplo_to_gpu(uplo);
 
     #ifdef HALA_ENABLE_CUDA
-    auto cuda_trans = trans_to_gpu(trans);
+    auto gpu_trans = trans_to_gpu(trans);
     cuda_call_backend6<conjugate, scalar_type>(cublasSsyr2k, cublasDsyr2k, cublasCher2k, cublasZher2k,
                                                cublasCsyr2k, cublasZsyr2k,
-                       "GPU-BLAS::Xsyr2k()/Xher2k()", engine, cuda_uplo, cuda_trans, N, K, palpha, convert(A), lda,
+                       "GPU-BLAS::Xsyr2k()/Xher2k()", engine, gpu_uplo, gpu_trans, N, K, palpha, convert(A), lda,
                        convert(B), ldb, pbeta, cconvert(C), ldc);
     #endif
     #ifdef HALA_ENABLE_ROCM
-    if __HALA_CONSTEXPR_IF__ (conjugate and is_complex<scalar_type>::value){
-        if (trans == 'T' or trans == 't') trans = 'C';
-    }else{
-        if (trans == 'C' or trans == 'c') trans = 'T';
-    }
-    auto cuda_trans = trans_to_gpu(trans);
+    auto gpu_trans = hermitian_trans<conjugate, scalar_type>(trans);
     rocm_call_backend6<conjugate, scalar_type>(rocblas_ssyr2k, rocblas_dsyr2k, rocblas_cher2k, rocblas_zher2k,
                                                rocblas_csyr2k, rocblas_zsyr2k,
-                       "rocBlas::Xsyr2k()/Xher2k()", engine, cuda_uplo, cuda_trans, N, K, palpha, convert(A), lda,
+                       "rocBlas::Xsyr2k()/Xher2k()", engine, gpu_uplo, gpu_trans, N, K, palpha, convert(A), lda,
                        convert(B), ldb, pbeta, cconvert(C), ldc);
     #endif
 }

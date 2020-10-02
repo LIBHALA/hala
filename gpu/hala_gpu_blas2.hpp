@@ -260,20 +260,20 @@ inline void trsv(gpu_engine const &engine, char uplo, char trans, char diag, int
     engine.check_gpu(A, x);
     assert( valid::trmsv(uplo, trans, diag, N, A, lda, x, incx) );
 
-    auto cuda_uplo  = uplo_to_gpu(uplo);
-    auto cuda_trans = trans_to_gpu(trans);
-    auto cuda_diag  = diag_to_gpu(diag);
+    auto gpu_uplo  = uplo_to_gpu(uplo);
+    auto gpu_trans = trans_to_gpu(trans);
+    auto gpu_diag  = diag_to_gpu(diag);
 
     using scalar_type = get_scalar_type<VectorLikeA>;
 
     #ifdef HALA_ENABLE_CUDA
     cuda_call_backend<scalar_type>(cublasStrsv, cublasDtrsv, cublasCtrsv, cublasZtrsv,
-                      "GPU-BLAS::Xtrsv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, convert(A), lda, cconvert(x), incx);
+                      "GPU-BLAS::Xtrsv()", engine, gpu_uplo, gpu_trans, gpu_diag, N, convert(A), lda, cconvert(x), incx);
     #endif
     #ifdef HALA_ENABLE_ROCM
     if __HALA_CONSTEXPR_IF__ (not is_complex<scalar_type>::value){
         rocm_call_backend<scalar_type>(rocblas_strsv, rocblas_dtrsv, rocblas_ctrsv, rocblas_ztrsv,
-                        "rocBlas::Xtrsv()", engine, cuda_uplo, cuda_trans, cuda_diag, N, convert(A), lda, cconvert(x), incx);
+                        "rocBlas::Xtrsv()", engine, gpu_uplo, gpu_trans, gpu_diag, N, convert(A), lda, cconvert(x), incx);
     }else{
         auto cpuA = engine.unload(A);
         auto cpux = engine.unload(x);
