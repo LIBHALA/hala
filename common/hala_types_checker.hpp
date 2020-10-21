@@ -167,7 +167,7 @@ constexpr bool assume_output = true;
  * \brief If \b get_size(x) is not equal to the \b required_size, then call \b hala::set_size().
  */
 template<class VectorLike, typename SizeType>
-void force_size(VectorLike &x, SizeType required_size){
+void force_size(SizeType required_size, VectorLike &x){
     if (get_size(x) != static_cast<size_t>(required_size)) set_size(static_cast<size_t>(required_size), x);
 }
 

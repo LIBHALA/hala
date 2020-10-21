@@ -799,6 +799,35 @@ inline void ilu_apply(ClassILU const &ilu, engined_vector<cengine, VectorLikeX> 
     ilu.apply(x.vector(), r.vector(), num_rhs);
 }
 
+template<class cengine, class ClassILU, class VectorLikeX, class VectorLikeR, class VectorLikeT>
+inline void ilu_apply(ClassILU const &ilu, engined_vector<cengine, VectorLikeX> const &x, engined_vector<cengine, VectorLikeR> __HALA_REFREF r, int num_rhs, engined_vector<cengine, VectorLikeT> &temp){
+    assert( check_engines(x, r) );
+    static_assert(std::is_same<typename ClassILU::engine_type, cengine>::value,
+                  "Using compatible compute engines in ilu_apply()");
+    ilu.apply(x.vector(), r.vector(), num_rhs, temp.vector());
+}
+template<class cengine, class ClassILU, class VectorLikeX, class VectorLikeR, class VectorLikeT>
+inline void ilu_apply(ClassILU const &ilu, engined_vector<cengine, VectorLikeX> const &x, engined_vector<cengine, VectorLikeR> __HALA_REFREF r, int num_rhs, engined_vector<cengine, VectorLikeT> &&temp){
+    assert( check_engines(x, r) );
+    static_assert(std::is_same<typename ClassILU::engine_type, cengine>::value,
+                  "Using compatible compute engines in ilu_apply()");
+    ilu.apply(x.vector(), r.vector(), num_rhs, temp.vector());
+}
+
+template<typename T, class VectorLikeX, class VectorLikeR>
+auto ilu_temp_buffer(cpu_ilu<T> const &, engined_vector<cpu_engine, VectorLikeX> const &x, engined_vector<cpu_engine, VectorLikeR> __HALA_REFREF, int = 1){
+    return engined_vector<cpu_engine, std::vector<T>>(x.engine());
+}
+#ifdef HALA_ENABLE_GPU
+template<typename T, class VectorLikeX, class VectorLikeR>
+auto ilu_temp_buffer(gpu_ilu<T> const &ilu, engined_vector<gpu_engine, VectorLikeX> const &x, engined_vector<gpu_engine, VectorLikeR> __HALA_REFREF r, int num_rhs = 1){
+    engined_vector<gpu_engine, gpu_vector<T>> temp(x.engine());
+    size_t bsize = ilu.buffer_size(x.vector(), r.vector(), num_rhs);
+    force_size(bsize, temp.vector());
+    return temp;
+}
+#endif
+
 }
 
 #endif

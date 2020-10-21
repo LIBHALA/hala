@@ -326,7 +326,7 @@ public:
         cpu_engine e;
         using standard_type = get_standard_type<VectorLike>;
         auto result = new_vector(e, std::vector<standard_type>());
-        force_size(result, get_size(gpu_data));
+        force_size(get_size(gpu_data), result);
         gpu_copy_n<copy_direction::device2host>(get_data(gpu_data), get_size(gpu_data), get_data(result));
         return result;
     }

@@ -119,6 +119,24 @@ template<typename T> struct gpu_ilu{
     //! \brief The class is trivially movable.
     gpu_ilu(gpu_ilu &&other) = default;
 
+    //! \brief Returns the buffer size used in the solve stage.
+    template<class VectorLikeX, class VectorLikeR>
+    size_t buffer_size(VectorLikeX const &x, VectorLikeR &&r, int num_rhs) const{
+        gpu_pntr<host_pntr> hold(engine());
+        if (num_rhs == 1){
+            auto tmp = new_vector(engine(), r);
+            return std::max( lower->trsv_buffer_size('N', 1.0, x, tmp), upper->trsv_buffer_size('N', 1.0, x, tmp) );
+        }else{
+            return std::max( lower->trsm_buffer_size('N', 'N', num_rhs, 1.0, x), upper->trsm_buffer_size('N', 'N', num_rhs, 1.0, x) );
+        }
+    }
+
+    //! \brief Returns a container with size matching gpu_ilu::buffer_size.
+    template<class VectorLikeX, class VectorLikeR>
+    gpu_vector<value_type> get_temp_buffer(VectorLikeX const &x, VectorLikeR &&r, int num_rhs) const{
+        return gpu_vector<value_type>(buffer_size(x, r, num_rhs), rengine.device());
+    }
+
     /*!
      * \brief Applies the preconditioner to the vector x and returns the result in r.
      *
@@ -126,21 +144,29 @@ template<typename T> struct gpu_ilu{
      * or to a set of vectors in a batch command.
      * The \b num_rhs indicates the number of right-hand-sides.
      */
-    template<class VectorLikeX, class VectorLikeR>
-    void apply(VectorLikeX const &x, VectorLikeR &&r, int num_rhs = 1) const{
+    template<class VectorLikeX, class VectorLikeR, class VectorLikeT>
+    void apply(VectorLikeX const &x, VectorLikeR &&r, int num_rhs, VectorLikeT &&temp_buff) const{
         check_types(x, r);
         check_set_size(assume_output, r, num_rhs, num_rows);
         gpu_pntr<host_pntr> hold(engine());
 
         if (num_rhs == 1){
             auto tmp = new_vector(engine(), r);
-            sparse_trsv('N', *lower.get(), 1.0, x, tmp);
-            sparse_trsv('N', *upper.get(), 1.0, tmp, r);
+            lower->trsv('N', 1.0, x, tmp, temp_buff);
+            upper->trsv('N', 1.0, tmp, r, temp_buff);
         }else{
             vcopy(engine(), x, r);
-            sparse_trsm('N', 'N', num_rhs, *lower.get(), 1.0, r);
-            sparse_trsm('N', 'N', num_rhs, *upper.get(), 1.0, r);
+            lower->trsm('N', 'N', num_rhs, 1.0, r, num_rows, temp_buff);
+            upper->trsm('N', 'N', num_rhs, 1.0, r, num_rows, temp_buff);
         }
+    }
+
+    /*!
+     * \brief Applies the preconditioner to the vector x and returns the result in r.
+     */
+    template<class VectorLikeX, class VectorLikeR>
+    void apply(VectorLikeX const &x, VectorLikeR &&r, int num_rhs = 1) const{
+        apply(x, r, num_rhs, get_temp_buffer(x, r, num_rhs));
     }
 
     //! \brief Returns the associated engine reference.

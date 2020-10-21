@@ -138,7 +138,7 @@ solve_gmres(compute_engine const &engine,
     assert( check_size(b, num_rows) );
 
     if (get_size_int(x) < num_rows){
-        force_size(x, num_rows);
+        force_size(num_rows, x);
         set_zero(engine, (size_t) num_rows, x);
     }
 
@@ -178,7 +178,7 @@ solve_gmres(compute_engine const &engine,
         Z.push_back(get_cast<standart_type>(inner_res));
 
         auto W = new_vector(engine, vals);
-        force_size(W, hala_size(num_rows, restart));
+        force_size(hala_size(num_rows, restart), W);
         vcopy(engine, r, W);
 
         int inner_iterations = 0;
@@ -257,9 +257,11 @@ solve_gmres_ilu(compute_engine const &engine,
     static_assert(std::is_same<typename ILUclass::engine_type, compute_engine>::value,
                   "Using compatible compute engine and ILU preconditioner");
 
+    auto temp_buffer = ilu_temp_buffer(ilu, b, x, 1);
+
     return solve_gmres(engine, stop, restart, pntr, indx, vals,
                        [&](auto const &inx, auto &outr)->void{
-                           ilu.apply(inx, outr);
+                           ilu_apply(ilu, inx, outr, 1, temp_buffer);
                        },
                        b, x);
 }

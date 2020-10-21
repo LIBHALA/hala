@@ -193,10 +193,10 @@ inline void spmv(gpu_engine const &engine, char uplo, int N, FSa alpha, const Ve
         { // respect the user selected pointer mode
             gpu_pntr<host_pntr> hold(engine);
             auto unpacked = new_vector(engine, A);
-            force_size(unpacked, hala_size(N, N));
+            force_size(hala_size(N, N), unpacked);
             scal(engine, 0.0, unpacked);
             tp2tr(engine, uplo, N, A, unpacked, N);
-            force_size(full_matrix, hala_size(N, N));
+            force_size(hala_size(N, N), full_matrix);
             scal(engine, 0.0, full_matrix);
             geam(engine, 'N', 'T', N, N, 1.0, unpacked, N, 1.0, unpacked, N, full_matrix, N);
             scal(engine, N, 0.5, full_matrix, N+1);

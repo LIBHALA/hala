@@ -302,7 +302,7 @@ public:
         if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
 
         auto C = new_vector(rengine, B);
-        force_size(C, hala_size(nrows, nrhs));
+        force_size(hala_size(nrows, nrhs), C);
 
         if (is_n(transb)){
 
@@ -319,7 +319,7 @@ public:
         }else{
 
             auto X = new_vector(rengine, B); // set X = B^T
-            force_size(X, hala_size(nrows, nrhs));
+            force_size(hala_size(nrows, nrhs), X);
             {
                 gpu_pntr<host_pntr> hold(rengine);
                 geam(rengine, 'T', 'T', nrows, nrhs, 1, B, ldb, 0, B, ldb, X, nrows);

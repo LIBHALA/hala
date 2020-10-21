@@ -77,14 +77,14 @@ void split_pattern(VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeD
     assert( num_rows > 0 );
     assert( check_size(indx, get_back(pntr)) );
 
-    force_size(upper_pntr, num_rows + 1);
-    force_size(lower_pntr, num_rows + 1);
+    force_size(num_rows + 1, upper_pntr);
+    force_size(num_rows + 1, lower_pntr);
 
     split_pattern_array<true>(num_rows, get_data(pntr), get_data(indx), get_data(diag),
                               get_data(upper_pntr), get_data(upper_indx), get_data(lower_pntr), get_data(lower_indx));
 
-    force_size(upper_indx, get_back(upper_pntr));
-    force_size(lower_indx, get_back(lower_pntr));
+    force_size(get_back(upper_pntr), upper_indx);
+    force_size(get_back(lower_pntr), lower_indx);
 
     split_pattern_array<false>(num_rows, get_data(pntr), get_data(indx), get_data(diag),
                                get_data(upper_pntr), get_data(upper_indx), get_data(lower_pntr), get_data(lower_indx));
@@ -115,8 +115,8 @@ void split_values(char uplo, char diag,
     assert( check_uplo(uplo) );
     assert( check_diag(diag) );
 
-    force_size(upper_vals, get_back(upper_pntr));
-    force_size(lower_vals, get_back(lower_pntr));
+    force_size(get_back(upper_pntr), upper_vals);
+    force_size(get_back(lower_pntr), lower_vals);
 
     using scalar_type = get_standard_type<VectorLikeV>;
     split_values_array<int, scalar_type>(num_rows, uplo, diag, convert(pntr), convert(vals),
@@ -161,7 +161,7 @@ void factorize_ilu(VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV
     int num_rows = get_size_int(pntr) - 1;
     assert(num_rows > 0);
     assert( check_size(diag, num_rows) );
-    force_size(ilu, get_size(vals));
+    force_size(get_size(vals), ilu);
 
     hala::vcopy(vals, ilu);
 

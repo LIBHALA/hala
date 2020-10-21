@@ -78,7 +78,7 @@ int solve_batch_cg(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
     int num_rhs = get_size_int(B) / (num_entries - 1);
 
     if (get_size(X) < get_size(B)){
-        force_size(X, get_size(B));
+        force_size(get_size(B), X);
         set_zero(get_size(B), X); // if defined on CUDA the entries will not be initialized
     }
 
@@ -180,9 +180,11 @@ int solve_batch_cg_ilu(stop_criteria<get_precision_type<VectorLikeV>> const &sto
     assert( num_entries > 1 ); // smallest case has one entry
     int num_rhs = get_size_int(B) / (num_entries - 1);
 
+    auto temp_buffer = ilu_temp_buffer(ilu, B, X, num_rhs);
+
     return solve_batch_cg(stop, pntr, indx, vals,
                           [&](auto const &inx, auto &outr)->void{
-                              ilu_apply(ilu, inx, outr, num_rhs);
+                              ilu_apply(ilu, inx, outr, num_rhs, temp_buffer);
                           }, B, X);
 }
 
