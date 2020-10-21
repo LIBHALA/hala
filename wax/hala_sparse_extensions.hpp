@@ -56,12 +56,12 @@ inline void ilu_apply(ClassILU const &ilu, VectorLikeX const &x, VectorLikeR &&r
  * \ingroup HALAWAXSPARSE
  * \brief Functional overload of ILU that creates a temporary buffer.
  *
- * Reads the buffer size from the ilu
+ * Returns a buffer allocated for the temporary work-space.
  *
  * Overloads:
  * \code
- *  hala::ilu_temp_buffer(ilu, x, r);
- *  hala::ilu_temp_buffer(ilu, x, r, 1);
+ *  auto workspace = hala::ilu_temp_buffer(ilu, x, r);
+ *  auto workspace = hala::ilu_temp_buffer(ilu, x, r, 1);
  * \endcode
  * The fist overload assumes that num_rhs is one.
  * Overloads are provided for cpu and gpu preconditioners and hala::engined_vector.
@@ -69,6 +69,23 @@ inline void ilu_apply(ClassILU const &ilu, VectorLikeX const &x, VectorLikeR &&r
 template<typename T, class VectorLikeX, class VectorLikeR>
 std::vector<T> ilu_temp_buffer(cpu_ilu<T> const &, VectorLikeX const&, VectorLikeR &&, int = 1){
     return std::vector<T>();
+}
+
+/*!
+ * \ingroup HALAWAXSPARSE
+ * \brief Functional overload of ILU that returns the buffer size.
+ *
+ * Overloads:
+ * \code
+ *  size_t bsize = hala::ilu_temp_buffer_size(ilu, x, r);
+ *  size_t bsize = hala::ilu_temp_buffer_size(ilu, x, r, 1);
+ * \endcode
+ * The fist overload assumes that num_rhs is one.
+ * Overloads are provided for cpu and gpu preconditioners and hala::engined_vector.
+ */
+template<typename T, class VectorLikeX, class VectorLikeR>
+size_t ilu_temp_buffer_size(cpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
+    return ilu.buffer_size(x, r, num_rhs);
 }
 
 #ifndef __HALA_DOXYGEN_SKIP
@@ -82,6 +99,10 @@ inline void ilu_apply(ClassILU const &ilu, VectorLikeX const &x, VectorLikeR &&r
 template<typename T, class VectorLikeX, class VectorLikeR>
 gpu_vector<T> ilu_temp_buffer(gpu_ilu<T> const &ilu, VectorLikeX const &x, VectorLikeR &&r, int num_rhs = 1){
     return gpu_vector<T>(ilu.buffer_size(x, r, num_rhs), ilu.engine().device());
+}
+template<typename T, class VectorLikeX, class VectorLikeR>
+size_t ilu_temp_buffer_size(gpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
+    return ilu.buffer_size(x, r, num_rhs);
 }
 #endif
 
