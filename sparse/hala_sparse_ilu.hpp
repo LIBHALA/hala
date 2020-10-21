@@ -114,6 +114,22 @@ struct cpu_ilu{
             apply_ilu_array<value_type>(num_rows, pntr, indx, diag.data(), ilu.data(), &rdata[hala_size(i, num_rows)]);
     }
 
+    //! \brief Returns the buffer size for the temporary buffer.
+    template<class VectorLikeX, class VectorLikeR>
+    size_t buffer_size(VectorLikeX const&, VectorLikeR &&, int) const{ return 0; }
+
+    //! \brief Applies the ILU factors using external buffer.
+    template<class VectorLikeX, class VectorLikeR, class VectorLikeT>
+    void apply(VectorLikeX const &x, VectorLikeR &&r, int num_rhs, VectorLikeT &&) const{
+        apply(x, r, num_rhs);
+    }
+
+    //! \brief Returns a container with size matching gpu_ilu::buffer_size.
+    template<class VectorLikeX, class VectorLikeR>
+    std::vector<value_type> get_temp_buffer(VectorLikeX const&, VectorLikeR &&, int) const{
+        return std::vector<value_type>();
+    }
+
 private:
     std::reference_wrapper<cpu_engine const> rengine;
     std::vector<value_type> ilu;

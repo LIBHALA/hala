@@ -94,6 +94,82 @@ public:
     //! \brief Returns the buffer size for vector solve.
     size_t buffer_size() const{ return buff_size; }
 
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    size_t trsv_buffer_size(char, FPA, VectorLikeB const&, VectorLikeX &) const{
+        return buffer_size();
+    }
+    //! \brief Matrix vector product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeX, class VectorLikeT>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &&x, VectorLikeT &&temp) const{
+        check_types(rvals, b, x);
+        assert( valid::sparse_trsv(trans, *this, b) );
+        check_set_size(assume_output, x, nrows);
+
+        auto rocm_trans = trans_to_rocm_sparse<value_type>(trans);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        runtime_assert(rocm_trans != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsv operations.");
+
+        rocm_call_backend<value_type>(rocsparse_scsrsv_solve, rocsparse_dcsrsv_solve, rocsparse_ccsrsv_solve, rocsparse_zcsrsv_solve,
+            "csrsv_solve", rengine, rocm_trans, nrows, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
+            analysis(rocm_trans, temp), convert(b), cconvert(x), rocsparse_solve_policy_auto, cconvert(temp));
+    }
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB>
+    size_t trsm_buffer_size(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb = -1) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
+
+        auto rocm_transa = trans_to_rocm_sparse<value_type>(transa);
+        auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose trsm operations on A.");
+        runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
+
+        size_t bsize = 0;
+        rocm_call_backend<value_type>(rocsparse_scsrsm_buffer_size, rocsparse_dcsrsm_buffer_size, rocsparse_ccsrsm_buffer_size, rocsparse_zcsrsm_buffer_size,
+            "csrsm_buffer_size", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
+            convert(B), ldb, info.desc, rocsparse_solve_policy_auto, pconvert(&bsize));
+        return bsize / sizeof(value_type);
+    }
+    //! \brief Matrix matrix product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeT>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb, VectorLikeT &&temp) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
+
+        auto rocm_transa = trans_to_rocm_sparse<value_type>(transa);
+        auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose trsm operations on A.");
+        runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
+
+        rocm_call_backend<value_type>(rocsparse_scsrsm_analysis, rocsparse_dcsrsm_analysis, rocsparse_ccsrsm_analysis, rocsparse_zcsrsm_analysis,
+                "csrsm_analysis", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
+                convert(B), ldb, info.desc, rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, cconvert(temp));
+
+        rocm_call_backend<value_type>(rocsparse_scsrsm_solve, rocsparse_dcsrsm_solve, rocsparse_ccsrsm_solve, rocsparse_zcsrsm_solve,
+                "csrsm_solve", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
+                convert(B), ldb, info.desc, rocsparse_solve_policy_auto, cconvert(temp));
+    }
+    //! \brief Matrix vector product.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &x) const{
+        trsv(trans, alpha, b, x, gpu_vector<value_type>(trsv_buffer_size(trans, alpha, b, x), rengine.device()));
+    }
+    //! \brief Matrix matrix product.
+    template<typename FPA, class VectorLikeB>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &B, int ldb = -1) const{
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        trsm(transa, transb, nrhs, alpha, B, ldb,
+             gpu_vector<value_type>(trsm_buffer_size(transa, transb, nrhs, alpha, B, ldb), rengine.device()));
+    }
+
 private:
     gpu_engine rengine;
     int const *rpntr, *rindx;
@@ -134,60 +210,6 @@ template<class TriangularMatrix, typename = void> struct is_on_gpu : std::false_
  */
 template<class TriangularMatrix>
 struct is_on_gpu<TriangularMatrix, std::enable_if_t<std::is_same<typename TriangularMatrix::engine_type, gpu_engine>::value, void>> : std::true_type{};
-
-template<class TriangularMat, typename FPA, class VectorLikeB, class VectorLikeX>
-std::enable_if_t<is_on_gpu<TriangularMat>::value>
-sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &x){
-    check_types(tri, b, x);
-    assert( valid::sparse_trsv(trans, tri, b) );
-    int const rows = tri.rows();
-    check_set_size(assume_output, x, rows);
-
-    using scalar_type = get_scalar_type<VectorLikeX>;
-    auto rocm_trans = trans_to_rocm_sparse<scalar_type>(trans);
-    auto palpha = get_pointer<scalar_type>(alpha);
-
-    runtime_assert(rocm_trans != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsv operations.");
-
-    gpu_vector<scalar_type> buff(tri.buffer_size(), tri.engine().device());
-    rocm_call_backend<scalar_type>(rocsparse_scsrsv_solve, rocsparse_dcsrsv_solve, rocsparse_ccsrsv_solve, rocsparse_zcsrsv_solve,
-        "csrsv_solve", tri.engine(), rocm_trans, tri.rows(), tri.nnz(), palpha, tri.description(), tri.vals(), tri.pntr(), tri.indx(),
-        tri.analysis(rocm_trans, buff), convert(b), cconvert(x), rocsparse_solve_policy_auto, convert(buff));
-}
-
-
-template<class TriangularMat, typename FPA, class VectorLikeB>
-std::enable_if_t<is_on_gpu<TriangularMat>::value>
-sparse_trsm(char transa, char transb, int nrhs, TriangularMat &tri, FPA alpha, VectorLikeB &B, int ldb = -1){
-    check_types(tri, B);
-    valid::default_ld(is_n(transb), tri.rows(), nrhs, ldb);
-    assert( valid::sparse_trsm(transa, transb, nrhs, tri, B, ldb) );
-
-    using scalar_type = get_scalar_type<VectorLikeB>;
-    auto rocm_transa = trans_to_rocm_sparse<scalar_type>(transa);
-    auto rocm_transb = trans_to_rocm_sparse<scalar_type>(transb);
-    auto palpha = get_pointer<scalar_type>(alpha);
-
-    rocsparse_mat_info info = tri.analysis();
-
-    runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose trsm operations on A.");
-    runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
-
-    size_t buff_size = 0;
-    rocm_call_backend<scalar_type>(rocsparse_scsrsm_buffer_size, rocsparse_dcsrsm_buffer_size, rocsparse_ccsrsm_buffer_size, rocsparse_zcsrsm_buffer_size,
-        "csrsm_buffer_size", tri.engine(), rocm_transa, rocm_transb, tri.rows(), nrhs, tri.nnz(), palpha, tri.description(), tri.vals(), tri.pntr(), tri.indx(),
-        convert(B), ldb, info, rocsparse_solve_policy_auto, pconvert(&buff_size));
-    buff_size /= sizeof(scalar_type);
-
-    gpu_vector<scalar_type> buff(buff_size, tri.engine().device());
-    rocm_call_backend<scalar_type>(rocsparse_scsrsm_analysis, rocsparse_dcsrsm_analysis, rocsparse_ccsrsm_analysis, rocsparse_zcsrsm_analysis,
-            "csrsm_analysis", tri.engine(), rocm_transa, rocm_transb, tri.rows(), nrhs, tri.nnz(), palpha, tri.description(), tri.vals(), tri.pntr(), tri.indx(),
-            convert(B), ldb, info, rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, cconvert(buff));
-
-    rocm_call_backend<scalar_type>(rocsparse_scsrsm_solve, rocsparse_dcsrsm_solve, rocsparse_ccsrsm_solve, rocsparse_zcsrsm_solve,
-            "csrsm_solve", tri.engine(), rocm_transa, rocm_transb, tri.rows(), nrhs, tri.nnz(), palpha, tri.description(), tri.vals(), tri.pntr(), tri.indx(),
-            convert(B), ldb, info, rocsparse_solve_policy_auto, cconvert(buff));
-}
 
 }
 #endif

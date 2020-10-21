@@ -132,21 +132,8 @@ void sparse_gemm(char transa, char transb, int M, int N, int K,
  * is constructed using the cpu_engine or the mixed_engine, and GPU memory for the cuda_engine.
  */
 template<class TriangularMat, typename FPA, class VectorLikeB, class VectorLikeX>
-std::enable_if_t<is_on_cpu<TriangularMat>::value>
-sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &&x){
-    check_types(tri, b, x);
-    assert( valid::sparse_trsv(trans, tri, b) );
-    int const rows = tri.rows();
-    check_set_size(assume_output, x, rows);
-
-    using scalar_type = get_standard_type<TriangularMat>;
-    auto falpha = get_cast<scalar_type>(alpha);
-
-    if (is_n(tri.diag())){
-        sparse_trsv_array<'N', scalar_type, int>(tri.uplo(), trans, rows, falpha, tri.pntr(), tri.indx(), tri.vals(), convert(b), cconvert(x));
-    }else{
-        sparse_trsv_array<'U', scalar_type, int>(tri.uplo(), trans, rows, falpha, tri.pntr(), tri.indx(), tri.vals(), convert(b), cconvert(x));
-    }
+void sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &&x){
+    tri.trsv(trans, alpha, b, x);
 }
 
 /*!
@@ -165,30 +152,8 @@ sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &
  * is constructed using the cpu_engine or the mixed_engine, and GPU memory for the cuda_engine.
  */
 template<class TriangularMat, typename FPA, class VectorLikeB>
-std::enable_if_t<is_on_cpu<TriangularMat>::value>
-sparse_trsm(char transa, char transb, int nrhs, TriangularMat const &tri, FPA alpha, VectorLikeB &&B, int ldb = -1){
-    check_types(tri, B);
-    valid::default_ld(is_n(transb), tri.rows(), nrhs, ldb);
-    assert( valid::sparse_trsm(transa, transb, nrhs, tri, B, ldb) );
-    int const rows = tri.rows();
-
-    using standard_type = get_standard_type<TriangularMat>;
-    auto bdata = get_standard_data(B);
-
-    if (is_n(transb)){ // non-transpose B
-        std::vector<standard_type> x(rows);
-        for(int i=0; i<nrhs; i++){
-            vcopy(rows, &bdata[hala_size(ldb, i)], 1, x, 1);
-            sparse_trsv(transa, tri, alpha, x, &bdata[hala_size(ldb, i)]);
-        }
-    }else{ // the conjugate operation cancels out on both sides of the equation
-        std::vector<standard_type> x(rows), btemp(rows);
-        for(int i=0; i<nrhs; i++){
-            vcopy(rows, &bdata[i], ldb, x, 1);
-            sparse_trsv(transa, tri, alpha, x, btemp);
-            vcopy(rows, btemp, 1, &bdata[i], ldb);
-        }
-    }
+void sparse_trsm(char transa, char transb, int nrhs, TriangularMat const &tri, FPA alpha, VectorLikeB &&B, int ldb = -1){
+    tri.trsm(transa, transb, nrhs, alpha, B, ldb);
 }
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section (overloads are documented with the main methods)

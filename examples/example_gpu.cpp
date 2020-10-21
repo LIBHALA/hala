@@ -214,11 +214,14 @@ int solve_pcg(int max_iter, hala::get_precision_type<VectorLikeV> stop_tolerance
     assert( b.size() == static_cast<size_t>(num_rows) );
 
     auto matrix = hala::make_sparse_matrix(num_rows, pntr, indx, vals);
-    size_t buffer_size =  sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 0.0, x);
+    auto ilu = hala::make_ilu(pntr, indx, vals, 'N');
+
+    size_t buffer_size = std::max(
+                             ilu_temp_buffer_size(ilu, b, x, 1),
+                             sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 0.0, x)
+                              );
     auto work_buffer = hala::new_vector(x);
     hala::set_size(buffer_size, work_buffer);
-
-    auto ilu = hala::make_ilu(pntr, indx, vals, 'N');
 
     auto r = hala::new_vector(x);
     auto p = hala::new_vector(x);
@@ -248,7 +251,7 @@ int solve_pcg(int max_iter, hala::get_precision_type<VectorLikeV> stop_tolerance
         iterate = not ((iterations >= max_iter) or (hala::norm2(r) < stop_tolerance));
 
         if (iterate){ // skip this part of done already
-            hala::ilu_apply(ilu, r, z);
+            hala::ilu_apply(ilu, r, z, 1, work_buffer);
 
             nzr = hala::dot(r, z);
 

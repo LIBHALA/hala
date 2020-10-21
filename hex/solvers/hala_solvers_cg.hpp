@@ -191,7 +191,7 @@ int solve_cg(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
     assert( check_size(b, num_entries - 1) );
 
     if (get_size(x) < num_entries - 1){
-        force_size(x, num_entries - 1);
+        force_size(num_entries - 1, x);
         set_zero(num_entries - 1, x); // if using CUDA the entries will not be initialized
     }
 
@@ -296,9 +296,11 @@ int solve_cg_ilu(stop_criteria<get_precision_type<VectorLikeV>> const &stop,
                  VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals,
                  ILUclass const &ilu, VectorLikeB const &b, VectorLikeX &x){
 
+    auto temp_buffer = ilu_temp_buffer(ilu, b, x, 1);
+
     return hala::solve_cg(stop, pntr, indx, vals,
                           [&](auto const &inx, auto &outr)->void{
-                                ilu_apply(ilu, inx, outr);
+                                ilu_apply(ilu, inx, outr, 1, temp_buffer);
                           }, b, x);
 }
 
@@ -336,7 +338,7 @@ int solve_cg_ilu(mixed_engine const &engine,
     auto gx = gpu_bind_vector(engine.gpu(), x);
     return solve_cg_ilu(engine.gpu(), stop, gpntr, gindx, gvals, ilu.cilu(), gb, gx);
 }
-#endif // end CUDA
+#endif // end GPU
 
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV,
          class VectorLikeX, class VectorLikeB>

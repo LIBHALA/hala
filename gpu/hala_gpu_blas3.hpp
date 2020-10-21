@@ -52,7 +52,7 @@ inline void trmm(gpu_engine const &engine, char side, char uplo, char trans, cha
 
     #ifdef HALA_ENABLE_CUDA
     auto C = new_vector(engine, B);
-    force_size(C, hala_size(M, N));
+    force_size(hala_size(M, N), C);
 
     cuda_call_backend<scalar_type>(cublasStrmm, cublasDtrmm, cublasCtrmm, cublasZtrmm,
                       "GPU-BLAS::Xtrmm()", engine, gpu_side, gpu_uplo, gpu_trans, gpu_diag,
