@@ -604,17 +604,15 @@ inline void sparse_gemm(mixed_engine const &e, char transa, char transb, int M, 
     sparse_gemm(e, transa, transb, M, N, K, alpha, pntr, indx, vals, B, ldb, beta, C, ldc);
 }
 
-template<class TriangularMat, typename FPA, class VectorLikeB, class VectorLikeX>
-std::enable_if_t<std::is_same<typename TriangularMat::engine_type, mixed_engine>::value>
-sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &&x){
+template<typename T, typename FPA, class VectorLikeB, class VectorLikeX>
+void sparse_trsv(char trans, mixed_tiangular_matrix<T> const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &&x){
     auto gb = tri.gpu_tri().engine().load(b);
     auto gx = gpu_bind_vector(tri.gpu_tri().engine(), x);
     hala::sparse_trsv(trans, tri.gpu_tri(), alpha, gb, gx);
 }
 
-template<class TriangularMat, typename FPA, class VectorLikeB>
-std::enable_if_t<std::is_same<typename TriangularMat::engine_type, mixed_engine>::value>
-sparse_trsm(char transa, char transb, int nrhs, TriangularMat const &tri, FPA alpha, VectorLikeB &&B, int ldb = -1){
+template<typename T, typename FPA, class VectorLikeB>
+void sparse_trsm(char transa, char transb, int nrhs, mixed_tiangular_matrix<T> const &tri, FPA alpha, VectorLikeB &&B, int ldb = -1){
     auto gB = gpu_bind_vector(tri.gpu_tri().engine(), B);
     hala::sparse_trsm(transa, transb, nrhs, tri.gpu_tri(), alpha, gB, ldb);
 }

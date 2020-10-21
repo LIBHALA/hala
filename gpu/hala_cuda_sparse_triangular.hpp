@@ -201,6 +201,155 @@ public:
     //! \brief Return the number of non-zeros.
     int nnz() const{ return nz; }
 
+    #if (__HALA_CUDA_API_VERSION__ >= 10000)
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    size_t trsv_buffer_size(char trans, FPA, VectorLikeB const&, VectorLikeX &) const{
+        auto cuda_trans = trans_to_cuda_sparse<value_type>(trans);
+
+        int buff_size = 0;
+        cuda_call_backend<value_type>(
+                cusparseScsrsv2_bufferSize, cusparseDcsrsv2_bufferSize, cusparseCcsrsv2_bufferSize, cusparseZcsrsv2_bufferSize,
+                "cusparseXcsrsv2_bufferSize", rengine, cuda_trans, nrows, nz, cdesc,
+                vals(), rpntr, rindx, analyze_sv(trans), pconvert(&buff_size));
+        return static_cast<size_t>(buff_size);
+    }
+    //! \brief Matrix vector product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeX, class VectorLikeT>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &&x, VectorLikeT &&temp) const{
+        check_types(rvals, b, x);
+        assert( valid::sparse_trsv(trans, *this, b) );
+        check_set_size(assume_output, x, nrows);
+
+        auto cuda_trans = trans_to_cuda_sparse<value_type>(trans);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        cuda_call_backend<value_type>(
+                cusparseScsrsv2_solve, cusparseDcsrsv2_solve, cusparseCcsrsv2_solve, cusparseZcsrsv2_solve,
+                "cusparseXcsrsv2_solve", rengine, cuda_trans, nrows, nz, palpha, cdesc,
+                vals(), rpntr, rindx, analyze_sv(trans),
+                convert(b), cconvert(x), policy(), cconvert(temp));
+    }
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB>
+    size_t trsm_buffer_size(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb = -1) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        auto cuda_transa = trans_to_cuda_sparse<value_type>(transa);
+        if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
+        auto cuda_transb = trans_to_cuda_sparse<value_type>(transb);
+
+        size_t buff_size = 0;
+        cuda_call_backend<value_type>(
+                cusparseScsrsm2_bufferSizeExt, cusparseDcsrsm2_bufferSizeExt, cusparseCcsrsm2_bufferSizeExt, cusparseZcsrsm2_bufferSizeExt,
+                "cusparseXcsrsm2_bufferSizeExt", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc,
+                vals(), rpntr, rindx, convert(B), ldb,
+                analyze_sm(transa, transb, nrhs, alpha, B, ldb), policy(), pconvert(&buff_size));
+        return buff_size;
+    }
+    //! \brief Matrix matrix product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeT>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb, VectorLikeT &&temp) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
+
+        auto palpha = get_pointer<value_type>(alpha);
+
+        auto cuda_transa = trans_to_cuda_sparse<value_type>(transa);
+        if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
+        auto cuda_transb = trans_to_cuda_sparse<value_type>(transb);
+
+        cuda_call_backend<value_type>(
+                cusparseScsrsm2_solve, cusparseDcsrsm2_solve, cusparseCcsrsm2_solve, cusparseZcsrsm2_solve,
+                "cusparseXcsrsm2_solve", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc,
+                vals(), rpntr, rindx, convert(B), ldb,
+                analyze_sm(transa, transb, nrhs, alpha, B, ldb), policy(), cconvert(temp));
+    }
+    #else
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    size_t trsv_buffer_size(char, FPA, VectorLikeB const&, VectorLikeX&&) const{ return 0; }
+    //! \brief Matrix vector product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeX, class VectorLikeT>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &&x, VectorLikeT&&) const{
+        check_types(rvals, b, x);
+        assert( valid::sparse_trsv(trans, *this, b) );
+        check_set_size(assume_output, x, nrows);
+
+        auto cuda_trans = trans_to_cuda_sparse<value_type>(trans);
+        auto palpha = get_pointer<value_type>(alpha);
+
+        cuda_call_backend<value_type>(cusparseScsrsv_solve, cusparseDcsrsv_solve, cusparseCcsrsv_solve, cusparseZcsrsv_solve,
+                      "cusparseXcsrsv_solve", rengine, cuda_trans, nrows, palpha, cdesc,
+                      vals(), rpntr, rindx, analyze_sv(trans), convert(b), cconvert(x));
+    }
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB>
+    size_t trsm_buffer_size(char, char, int, FPA, VectorLikeB &&, int = -1) const{ return 0; }
+    //! \brief Matrix matrix product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeT>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb, VectorLikeT &&) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
+
+        auto palpha = get_pointer<value_type>(alpha);
+
+        auto cuda_transa = trans_to_cuda_sparse<value_type>(transa);
+        if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
+
+        auto C = new_vector(rengine, B);
+        force_size(C, hala_size(nrows, nrhs));
+
+        if (is_n(transb)){
+
+            cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
+                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc,
+                            vals(), rpntr, rindx, analyze_sv(transa), convert(B), ldb, cconvert(C), nrows);
+
+            if (ldb == nrows){
+                vcopy(rengine, C, B); // copy back
+            }else{ // copy only the block
+                gpu_pntr<host_pntr> hold(rengine); // in case device pointers were used in the call above
+                geam(rengine, 'N', 'N', nrows, nrhs, 1, C, nrows, 0, C, nrows, B, ldb);
+            }
+        }else{
+
+            auto X = new_vector(rengine, B); // set X = B^T
+            force_size(X, hala_size(nrows, nrhs));
+            {
+                gpu_pntr<host_pntr> hold(rengine);
+                geam(rengine, 'T', 'T', nrows, nrhs, 1, B, ldb, 0, B, ldb, X, nrows);
+            }
+
+            cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
+                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc,
+                            vals(), rpntr, rindx, analyze_sv(transa), convert(X), nrows, cconvert(C), nrows);
+
+            { // C holds the answer, write back to B in transposed order
+                gpu_pntr<host_pntr> hold(rengine);
+                geam(rengine, 'T', 'T', nrhs, nrows, 1, C, nrows, 0, C, nrows, B, ldb);
+            }
+
+        }
+    }
+    #endif
+    //! \brief Matrix vector product.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &x) const{
+        trsv(trans, alpha, b, x, gpu_vector<value_type>(trsv_buffer_size(trans, alpha, b, x), rengine.device()));
+    }
+    //! \brief Matrix matrix product.
+    template<typename FPA, class VectorLikeB>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &B, int ldb = -1) const{
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        trsm(transa, transb, nrhs, alpha, B, ldb,
+             gpu_vector<value_type>(trsm_buffer_size(transa, transb, nrhs, alpha, B, ldb), rengine.device()));
+    }
+
 private:
     gpu_engine rengine;
     int const *rpntr, *rindx;
@@ -248,123 +397,6 @@ template<class TriangularMatrix, typename = void> struct is_on_gpu : std::false_
  */
 template<class TriangularMatrix>
 struct is_on_gpu<TriangularMatrix, std::enable_if_t<std::is_same<typename TriangularMatrix::engine_type, gpu_engine>::value, void>> : std::true_type{};
-
-
-/*!
- * \ingroup HALAGPUSPARSE
- * \brief Wrapper around solver of sparse triangular system of equations, Xcsrsv_solve() and Xcsrsv2_solve.
- */
-template<class TriangularMat, typename FPA, class VectorLikeB, class VectorLikeX>
-std::enable_if_t<is_on_gpu<TriangularMat>::value>
-sparse_trsv(char trans, TriangularMat const &tri, FPA alpha, VectorLikeB const &b, VectorLikeX &x){
-    check_types(tri, b, x);
-    assert( valid::sparse_trsv(trans, tri, b) );
-    int const rows = tri.rows();
-    check_set_size(assume_output, x, rows);
-
-    using scalar_type = get_scalar_type<VectorLikeX>;
-    auto cuda_trans = trans_to_cuda_sparse<scalar_type>(trans);
-    auto palpha = get_pointer<scalar_type>(alpha);
-
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
-
-    int buff_size = 0;
-    cuda_call_backend<scalar_type>(
-            cusparseScsrsv2_bufferSize, cusparseDcsrsv2_bufferSize, cusparseCcsrsv2_bufferSize, cusparseZcsrsv2_bufferSize,
-            "cuSparse::Xcsrsv2_bufferSize()", tri.engine(), cuda_trans, tri.rows(), tri.nnz(), tri.description(),
-            tri.vals(), tri.pntr(), tri.indx(), tri.analyze_sv(trans), pconvert(&buff_size));
-
-    auto f77_buffer = make_gpu_vector<int>(buff_size / sizeof(int), tri.engine().device());
-
-    cuda_call_backend<scalar_type>(
-            cusparseScsrsv2_solve, cusparseDcsrsv2_solve, cusparseCcsrsv2_solve, cusparseZcsrsv2_solve,
-            "cuSparse::Xcsrsv2_solve()", tri.engine(), cuda_trans, tri.rows(), tri.nnz(), palpha, tri.description(),
-            tri.vals(), tri.pntr(), tri.indx(), tri.analyze_sv(trans),
-            convert(b), cconvert(x), tri.policy(), cconvert(f77_buffer));
-
-    #else
-    cuda_call_backend<scalar_type>(cusparseScsrsv_solve, cusparseDcsrsv_solve, cusparseCcsrsv_solve, cusparseZcsrsv_solve,
-                      "cuSparse::Xcsrsm_solve()", tri.engine(), cuda_trans, rows, palpha, tri.description(),
-                      tri.vals(), tri.pntr(), tri.indx(), tri.analyze_sv(trans), convert(b), cconvert(x));
-    #endif
-}
-
-/*!
- * \ingroup HALAGPUSPARSE
- * \brief Triangular matrix-matrix solve using the gpu_engine.
- */
-template<class TriangularMat, typename FPA, class VectorLikeB>
-std::enable_if_t<is_on_gpu<TriangularMat>::value>
-sparse_trsm(char transa, char transb, int nrhs, TriangularMat &tri, FPA alpha, VectorLikeB &B, int ldb = -1){
-    check_types(tri, B);
-    valid::default_ld(is_n(transb), tri.rows(), nrhs, ldb);
-    assert( valid::sparse_trsm(transa, transb, nrhs, tri, B, ldb) );
-
-    using scalar_type = get_scalar_type<VectorLikeB>;
-    auto palpha = get_pointer<scalar_type>(alpha);
-
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
-
-    auto cuda_transa = trans_to_cuda_sparse<scalar_type>(transa);
-    if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
-    auto cuda_transb = trans_to_cuda_sparse<scalar_type>(transb);
-
-    size_t buff_size = 0;
-    cuda_call_backend<scalar_type>(
-            cusparseScsrsm2_bufferSizeExt, cusparseDcsrsm2_bufferSizeExt, cusparseCcsrsm2_bufferSizeExt, cusparseZcsrsm2_bufferSizeExt,
-            "cuSparse::Xcsrsm2_bufferSize()", tri.engine(), 0, cuda_transa, cuda_transb, tri.rows(), nrhs, tri.nnz(), palpha, tri.description(),
-            tri.vals(), tri.pntr(), tri.indx(), convert(B), ldb,
-            tri.analyze_sm(transa, transb, nrhs, alpha, B, ldb), tri.policy(), pconvert(&buff_size));
-
-    auto f77_buffer = make_gpu_vector<int>(buff_size / sizeof(int), tri.engine().device());
-
-    palpha = get_pointer<scalar_type>(alpha);
-    cuda_call_backend<scalar_type>(
-            cusparseScsrsm2_solve, cusparseDcsrsm2_solve, cusparseCcsrsm2_solve, cusparseZcsrsm2_solve,
-            "cuSparse::Xcsrsm2_solve()", tri.engine(), 0, cuda_transa, cuda_transb, tri.rows(), nrhs, tri.nnz(), palpha, tri.description(),
-            tri.vals(), tri.pntr(), tri.indx(), convert(B), ldb,
-            tri.analyze_sm(transa, transb, nrhs, alpha, B, ldb), tri.policy(), cconvert(f77_buffer));
-
-    #else
-
-    auto cuda_transa = trans_to_cuda_sparse<scalar_type>(transa);
-
-    auto C = new_vector(tri.engine(), B);
-    force_size(C, hala_size(tri.rows(), nrhs));
-
-    if (is_n(transb)){
-
-        cuda_call_backend<scalar_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                          "cuSparse::Xcsrsm_solve()", tri.engine(), cuda_transa, tri.rows(), nrhs, palpha, tri.description(),
-                          tri.vals(), tri.pntr(), tri.indx(), tri.analyze_sv(transa), convert(B), ldb, cconvert(C), tri.rows());
-
-        if (ldb == tri.rows()){
-            vcopy(tri.engine(), C, B); // copy back
-        }else{ // copy only the block
-            gpu_pntr<host_pntr> hold(tri.engine()); // in case device pointers were used in the call above
-            geam(tri.engine(), 'N', 'N', tri.rows(), nrhs, 1, C, tri.rows(), 0, C, tri.rows(), B, ldb);
-        }
-    }else{
-
-        auto X = new_vector(tri.engine(), B); // set X = B^T
-        force_size(X, hala_size(tri.rows(), nrhs));
-        {
-            gpu_pntr<host_pntr> hold(tri.engine());
-            geam(tri.engine(), 'T', 'T', tri.rows(), nrhs, 1, B, ldb, 0, B, ldb, X, tri.rows());
-        }
-
-        cuda_call_backend<scalar_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                          "cuSparse::Xcsrsm_solve()", tri.engine(), cuda_transa, tri.rows(), nrhs, palpha, tri.description(),
-                          tri.vals(), tri.pntr(), tri.indx(), tri.analyze_sv(transa), convert(X), tri.rows(), cconvert(C), tri.rows());
-
-        { // C holds the answer, write back to B in transposed order
-            gpu_pntr<host_pntr> hold(tri.engine());
-            geam(tri.engine(), 'T', 'T', nrhs, tri.rows(), 1, C, tri.rows(), 0, C, tri.rows(), B, ldb);
-        }
-
-    }
-    #endif
-}
 
 }
 

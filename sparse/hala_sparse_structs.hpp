@@ -266,6 +266,65 @@ public:
     //! \brief Returns the stored policy.
     char policy(){ return rpolicy; }
 
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    size_t trsv_buffer_size(char, FPA, VectorLikeB const&, VectorLikeX&) const{ return 0; }
+    //! \brief Matrix vector product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeX, class VectorLikeT>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &x, VectorLikeT&&) const{
+        check_types(rvals, b, x);
+        assert( valid::sparse_trsv(trans, *this, b) );
+        check_set_size(assume_output, x, nrows);
+
+        auto falpha = get_cast<value_type>(alpha);
+
+        if (is_n(rdiag)){
+            sparse_trsv_array<'N', value_type, int>(ruplo, trans, nrows, falpha, rpntr, rindx, vals(), convert(b), cconvert(x));
+        }else{
+            sparse_trsv_array<'U', value_type, int>(ruplo, trans, nrows, falpha, rpntr, rindx, vals(), convert(b), cconvert(x));
+        }
+    }
+    //! \brief Matrix vector product.
+    template<typename FPA, class VectorLikeB, class VectorLikeX>
+    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &&x) const{
+        trsv(trans, alpha, b, x, std::vector<value_type>(trsv_buffer_size(trans, alpha, b, x)));
+    }
+    //! \brief Returns the size required for the temporary buffers.
+    template<typename FPA, class VectorLikeB>
+    size_t trsm_buffer_size(char, char, int, FPA, VectorLikeB &, int = -1) const{ return 0; }
+    //! \brief Matrix matrix product with a user-provided buffer.
+    template<typename FPA, class VectorLikeB, class VectorLikeT>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb, VectorLikeT &&) const{
+        check_types(rvals, B);
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
+
+        using standard_type = get_standard_type<std::vector<value_type>>;
+        auto bdata = get_standard_data(B);
+
+        if (is_n(transb)){ // non-transpose B
+            std::vector<standard_type> x(nrows);
+            for(int i=0; i<nrhs; i++){
+                vcopy(nrows, &bdata[hala_size(ldb, i)], 1, x, 1);
+                trsv(transa, alpha, x, &bdata[hala_size(ldb, i)]);
+            }
+        }else{ // the conjugate operation cancels out on both sides of the equation
+            std::vector<standard_type> x(nrows), btemp(nrows);
+            for(int i=0; i<nrhs; i++){
+                vcopy(nrows, &bdata[i], ldb, x, 1);
+                trsv(transa, alpha, x, btemp);
+                vcopy(nrows, btemp, 1, &bdata[i], ldb);
+            }
+        }
+    }
+    //! \brief Matrix matrix product.
+    template<typename FPA, class VectorLikeB>
+    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb = -1) const{
+        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
+        trsm(transa, transb, nrhs, alpha, B, ldb,
+             std::vector<value_type>(trsm_buffer_size(transa, transb, nrhs, alpha, B, ldb)));
+    }
+
 private:
     std::reference_wrapper<cpu_engine const> rengine;
     int const *rpntr, *rindx; // reference pntr, indx, and vals
