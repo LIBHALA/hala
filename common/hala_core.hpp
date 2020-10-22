@@ -26,11 +26,6 @@
 #include <memory>
 #include <typeinfo>
 
-#ifndef NDEBUG
-using std::cout;
-using std::endl;
-#endif
-
 /*!
  * \internal
  * \file hala_core.hpp
@@ -56,13 +51,13 @@ using std::endl;
  * \ingroup HALACORE
  * \brief The major component of the version, standalone without CMake.
  */
-#define HALA_VERSION_MAJOR 0
+#define HALA_VERSION_MAJOR 1
 
 /*!
  * \ingroup HALACORE
  * \brief The major component of the version, standalone without CMake.
  */
-#define HALA_VERSION_MINOR 3
+#define HALA_VERSION_MINOR 0
 
 /*!
  * \ingroup HALACORE

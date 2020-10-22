@@ -34,7 +34,7 @@ namespace hala{
 
 /*!
  * \ingroup HALAGPUBLAS3
- * \brief Wrapper to cuBLAS triangular matrix-matrix multiply Xtrmm().
+ * \brief Wrapper to GPU triangular matrix-matrix multiply Xtrmm().
  */
 template<typename FS, class VectorLikeA, class VectorLikeB>
 inline void trmm(gpu_engine const &engine, char side, char uplo, char trans, char diag, int M, int N, FS alpha, const VectorLikeA &A, int lda, VectorLikeB &&B, int ldb){
@@ -73,7 +73,7 @@ inline void trmm(gpu_engine const &engine, char side, char uplo, char trans, cha
 
 /*!
  * \ingroup HALAGPUBLAS3
- * \brief Wrapper to cuBLAS triangular matrix-matrix solve Xtrsm().
+ * \brief Wrapper to GPU triangular matrix-matrix solve Xtrsm().
  */
 template<typename FS, class VectorLikeA, class VectorLikeB>
 inline void trsm(gpu_engine const &engine, char side, char uplo, char trans, char diag, int M, int N, FS alpha, const VectorLikeA &A, int lda, VectorLikeB &&B, int ldb){
@@ -164,7 +164,7 @@ inline void syr2k(gpu_engine const &engine, char uplo, char trans, int N, int K,
 
 /*!
  * \ingroup HALAGPUBLAS3
- * \brief Wrapper to cuBLAS symmetric or Hermitian matrix multiply Xsymm()/Xhemm().
+ * \brief Wrapper to GPU symmetric or Hermitian matrix multiply Xsymm()/Xhemm().
  */
 template<bool conjugate = false, typename FSa, typename FSb, class VectorLikeA, class VectorLikeB, class VectorLikeC>
 inline void symm(gpu_engine const &engine, char side, char uplo, int M, int N, FSa alpha, VectorLikeA const &A, int lda,
@@ -196,7 +196,7 @@ inline void symm(gpu_engine const &engine, char side, char uplo, int M, int N, F
 
 /*!
  * \ingroup HALAGPUBLAS3
- * \brief Wrapper to cuBLAS general matrix multiply Xgemm().
+ * \brief Wrapper to GPU general matrix multiply Xgemm().
  */
 template<typename FPA, typename FPB, class VectorLikeA, class VectorLikeB, class VectorLikeC>
 inline void gemm(gpu_engine const &engine, char transa, char transb, int M, int N, int K,

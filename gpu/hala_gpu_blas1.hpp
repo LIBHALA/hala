@@ -40,7 +40,7 @@ namespace hala{
 
 /*!
  * \ingroup HALAGPUBLAS1
- * \brief Wrapper to cuBLAS copy.
+ * \brief Wrapper to GPU copy.
  *
  * Copies \b N entries of \b x into \b y using strides \b incx and \b incy.
  * The name is chosen to be distinct from standard copy().
@@ -78,7 +78,7 @@ inline void vcopy(gpu_engine const &engine, VectorLikeX const &x, VectorLikeY &&
 
 /*!
  * \ingroup HALABLAS1
- * \brief Wrapper to cuBLAS Xswap() methods.
+ * \brief Wrapper to GPU Xswap() methods.
  */
 template<class VectorLikeX, class VectorLikeY>
 inline void vswap(gpu_engine const &engine, int N, VectorLikeX &&x, int incx, VectorLikeY &&y, int incy){
@@ -122,7 +122,7 @@ template<class VectorLike> auto norm2(gpu_engine const &engine, int N, VectorLik
 
 /*!
  * \ingroup HALAGPUBLAS1
- * \brief Wrapper to cuBLAS vector sum of absolute values of the entry components.
+ * \brief Wrapper to GPU vector sum of absolute values of the entry components.
  */
 template<class VectorLikeX>
 inline auto asum(gpu_engine const &engine, int N, VectorLikeX const &x, int incx){
@@ -147,8 +147,8 @@ inline auto asum(gpu_engine const &engine, int N, VectorLikeX const &x, int incx
 }
 
 /*!
- * \ingroup HALABLAS1
- * \brief Wrapper to cuBLAS find index of largest vector entry, Ixamax().
+ * \ingroup HALAGPUBLAS1
+ * \brief Wrapper to GPU find index of largest vector entry, Ixamax().
  */
 template<class VectorLikeX>
 inline int iamax(gpu_engine const &engine, int N, VectorLikeX const &x, int incx){
@@ -264,7 +264,7 @@ void rotg(gpu_engine const &engine, T *SA, T *SB, typename define_standard_preci
 
 /*!
  * \ingroup HALAGPUBLAS1
- * \brief Wrapper to cuBLAS apply the Givens rotation, Xrot().
+ * \brief Wrapper to GPU apply the Givens rotation, Xrot().
  */
 template<typename FC, typename FS, class VectorLikeX, class VectorLikeY>
 void rot(gpu_engine const &engine, int N, VectorLikeX &x, int incx, VectorLikeY &&y, int incy, FC C, FS S){
@@ -312,8 +312,8 @@ void rot(gpu_engine const &engine, int N, VectorLikeX &x, int incx, VectorLikeY 
 }
 
 /*!
- * \ingroup HALABLAS1
- * \brief Wrapper to cuBLAS generate modified Givens rotation.
+ * \ingroup HALAGPUBLAS1
+ * \brief Wrapper to GPU generate modified Givens rotation.
  */
 template<typename T, class VectorLike>
 void rotmg(gpu_engine const &engine, T &D1, T &D2, T &X, T const &Y, VectorLike &&param){
@@ -343,8 +343,8 @@ void rotmg(gpu_engine const &engine, T &D1, T &D2, T &X, T const &Y, VectorLike 
 }
 
 /*!
- * \ingroup HALABLAS1
- * \brief Wrapper to BLAS apply the Givens rotation, Xrotm().
+ * \ingroup HALAGPUBLAS1
+ * \brief Wrapper to GPU apply the Givens rotation, Xrotm().
  */
 template<class VectorLikeX, class VectorLikeY, class VectorLikeP>
 void rotm(gpu_engine const &engine, int N, VectorLikeX &&x, int incx, VectorLikeY &&y, int incy, VectorLikeP const &param){
