@@ -68,4 +68,4 @@ doxygen_add_docs(hala_doxygen
                  examples/example_gpu.cpp
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../
                  COMMENT "Building the HALA documentation")
-#add_custom_target(hala_documentation ALL DEPENDS hala_doxygen)
+add_custom_target(hala_documentation ALL DEPENDS hala_doxygen)

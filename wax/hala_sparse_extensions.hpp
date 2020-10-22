@@ -77,14 +77,14 @@ std::vector<T> ilu_temp_buffer(cpu_ilu<T> const &, VectorLikeX const&, VectorLik
  *
  * Overloads:
  * \code
- *  size_t bsize = hala::ilu_temp_buffer_size(ilu, x, r);
- *  size_t bsize = hala::ilu_temp_buffer_size(ilu, x, r, 1);
+ *  size_t bsize = hala::ilu_buffer_size(ilu, x, r);
+ *  size_t bsize = hala::ilu_buffer_size(ilu, x, r, 1);
  * \endcode
  * The fist overload assumes that num_rhs is one.
  * Overloads are provided for cpu and gpu preconditioners and hala::engined_vector.
  */
 template<typename T, class VectorLikeX, class VectorLikeR>
-size_t ilu_temp_buffer_size(cpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
+size_t ilu_buffer_size(cpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
     return ilu.buffer_size(x, r, num_rhs);
 }
 
@@ -101,7 +101,7 @@ gpu_vector<T> ilu_temp_buffer(gpu_ilu<T> const &ilu, VectorLikeX const &x, Vecto
     return gpu_vector<T>(ilu.buffer_size(x, r, num_rhs), ilu.engine().device());
 }
 template<typename T, class VectorLikeX, class VectorLikeR>
-size_t ilu_temp_buffer_size(gpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
+size_t ilu_buffer_size(gpu_ilu<T> const &ilu, VectorLikeX const&x, VectorLikeR &&r, int num_rhs = 1){
     return ilu.buffer_size(x, r, num_rhs);
 }
 #endif

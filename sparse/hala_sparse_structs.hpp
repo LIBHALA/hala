@@ -140,7 +140,7 @@ private:
 
 /*!
  * \ingroup HALASPARSE
- * \brief Factory method to construct a mixed sparse matrix.
+ * \brief Factory method to construct a sparse matrix.
  */
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_sparse_matrix(int num_rows, int num_cols, int num_nz, VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals){
@@ -149,6 +149,10 @@ auto make_sparse_matrix(int num_rows, int num_cols, int num_nz, VectorLikeP cons
     using scalar_type = get_scalar_type<VectorLikeV>;
     return cpu_sparse_matrix<scalar_type>(num_rows, num_cols, num_nz, pntr, indx, vals);
 }
+/*!
+ * \ingroup HALASPARSE
+ * \brief Factory method to construct a square sparse matrix.
+ */
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_sparse_matrix(int num_cols, VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals){
     check_types(vals);
@@ -156,44 +160,23 @@ auto make_sparse_matrix(int num_cols, VectorLikeP const &pntr, VectorLikeI const
     using scalar_type = get_scalar_type<VectorLikeV>;
     return cpu_sparse_matrix<scalar_type>(num_cols, pntr, indx, vals);
 }
+/*!
+ * \ingroup HALASPARSE
+ * \brief Factory method to construct a sparse matrix, overload with explicit hala::cpu_engine.
+ */
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_sparse_matrix(cpu_engine const&, int num_rows, int num_cols, int num_nz,
                         VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals){
     return make_sparse_matrix(num_rows, num_cols, num_nz, pntr, indx, vals);
 }
+/*!
+ * \ingroup HALASPARSE
+ * \brief Factory method to construct a square sparse matrix, overload with explicit hala::cpu_engine.
+ */
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
 auto make_sparse_matrix(cpu_engine const&, int num_cols, VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals){
     return make_sparse_matrix(num_cols, pntr, indx, vals);
 }
-
-#ifndef __HALA_DOXYGEN_SKIP
-template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
-size_t sparse_gemv_buffer_size(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
-    return matrix.gemv_buffer_size(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
-}
-template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
-void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
-    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
-}
-template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
-void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&temp){
-    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y), std::forward<VectorLikeBuff>(temp));
-}
-template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-size_t sparse_gemm_buffer_size(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
-    return matrix.gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
-}
-template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeBuff>
-void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc, VectorLikeBuff &&temp){
-    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc, std::forward<VectorLikeBuff>(temp));
-}
-template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
-    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
-}
-#endif
-
-
 
 /*!
  * \ingroup HALASPARSE

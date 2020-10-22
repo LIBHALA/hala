@@ -43,10 +43,6 @@ namespace hala{
  *  axpy operations
  */
 
-/*!
- * \ingroup HALAWAXEXT
- * \brief Return a copy of the vector using an member function for the engine.
- */
 template<typename VectorLike>
 auto cpu_engine::vcopy(VectorLike const &x) const{
     auto y = new_vector(*this, x);
@@ -93,7 +89,6 @@ template<class VectorLike>
 auto new_vector(mixed_engine const &engine, VectorLike const &){
     return vector_constructor<get_vdefault<mixed_engine, VectorLike>>::make_one(engine);
 }
-
 template<typename VectorLike> auto mixed_engine::vcopy(VectorLike const &x) const{
     auto y = new_vector(*this, x);
     hala::vcopy(x, y);

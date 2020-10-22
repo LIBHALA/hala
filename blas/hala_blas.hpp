@@ -96,9 +96,9 @@
  *
  * \par Engine overloads
  * In addition to the overloads with default parameters, the HALA BLAS module adds overloads that
- * accept a hala::cpu_egine class. While the engine does not change anything about the calls,
- * it allows for a seamless switch between BLAS and cuBlas implementations by simply changing
- * the engine (also, when using hala::cuda_engine, all vector data must reside in GPU memory).
+ * accept a hala::cpu_engine class. While the engine does not change anything about the calls,
+ * it allows for a seamless switch between BLAS and cuBlas/rocBlas implementations by simply changing
+ * the engine (also, when using hala::gpu_engine, all vector data must reside in GPU memory).
  *
  * \par BLAS Assumptions:
  *  - There is no explicit initialization of BLAS, i.e., there is no blas_init() call.

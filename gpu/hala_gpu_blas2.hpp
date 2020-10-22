@@ -63,7 +63,7 @@ void gemv(gpu_engine const &engine, char trans, int M, int N, FPA alpha,
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS general banded matrix-vector multiply Xgbmv().
+ * \brief Wrapper to GPU general banded matrix-vector multiply Xgbmv().
  */
 template<typename FSa, typename FSb, class VectorLikeA, class VectorLikeX, class VectorLikeY>
 inline void gbmv(gpu_engine const &engine, char trans, int M, int N, int kl, int ku, FSa alpha, const VectorLikeA &A, int lda,
@@ -91,7 +91,7 @@ inline void gbmv(gpu_engine const &engine, char trans, int M, int N, int kl, int
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS symmetric or Hermitian matrix-vector multiply Xsymv().
+ * \brief Wrapper to GPU symmetric or Hermitian matrix-vector multiply Xsymv().
  */
 template<bool conjugate = false, typename FSa, typename FSb, class VectorLikeA, class VectorLikeX, class VectorLikeY>
 inline void symv(gpu_engine const &engine, char uplo, int N, FSa alpha, const VectorLikeA &A, int lda,
@@ -119,7 +119,7 @@ inline void symv(gpu_engine const &engine, char uplo, int N, FSa alpha, const Ve
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to BLAS symmetric or Hermitian banded matrix-vector multiply Xsbmv().
+ * \brief Wrapper to GPU symmetric or Hermitian banded matrix-vector multiply Xsbmv().
  */
 template<bool conjugate = true, typename FSa, typename FSb, class VectorLikeA, class VectorLikeX, class VectorLikeY>
 inline void sbmv(gpu_engine const &engine, char uplo, int N, int k, FSa alpha, const VectorLikeA &A, int lda,
@@ -166,7 +166,7 @@ inline void sbmv(gpu_engine const &engine, char uplo, int N, int k, FSa alpha, c
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to BLAS symmetric or Hermitian matrix-vector multiply Xspmv() in packed format.
+ * \brief Wrapper to GPU symmetric or Hermitian matrix-vector multiply Xspmv() in packed format.
  */
 template<bool conjugate = false, typename FSa, typename FSb, class VectorLikeA, class VectorLikeX, class VectorLikeY>
 inline void spmv(gpu_engine const &engine, char uplo, int N, FSa alpha, const VectorLikeA &A,
@@ -226,7 +226,7 @@ inline void spmv(gpu_engine const &engine, char uplo, int N, FSa alpha, const Ve
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS triangular matrix-vector multiply Xtrmv().
+ * \brief Wrapper to GPU triangular matrix-vector multiply Xtrmv().
  */
 template<class VectorLikeA, class VectorLikeX>
 inline void trmv(gpu_engine const &engine, char uplo, char trans, char diag, int N, const VectorLikeA &A, int lda, VectorLikeX &&x, int incx){
@@ -337,7 +337,7 @@ inline void tpsv(gpu_engine const &engine, char uplo, char trans, char diag, int
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS triangular banded matrix-vector multiply Xtbmv().
+ * \brief Wrapper to GPU triangular banded matrix-vector multiply Xtbmv().
  */
 template<class VectorLikeA, class VectorLikeX>
 inline void tbmv(gpu_engine const &engine, char uplo, char trans, char diag, int N, int k, const VectorLikeA &A, int lda, VectorLikeX &&x, int incx){
@@ -363,7 +363,7 @@ inline void tbmv(gpu_engine const &engine, char uplo, char trans, char diag, int
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS triangular matrix-vector solve Xtbsv().
+ * \brief Wrapper to GPU triangular matrix-vector solve Xtbsv().
  */
 template<class VectorLikeA, class VectorLikeX>
 inline void tbsv(gpu_engine const &engine, char uplo, char trans, char diag, int N, int k, const VectorLikeA &A, int lda, VectorLikeX &&x, int incx){
@@ -389,7 +389,7 @@ inline void tbsv(gpu_engine const &engine, char uplo, char trans, char diag, int
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS general rank-1 update Xgerx().
+ * \brief Wrapper to GPU general rank-1 update Xgerx().
  */
 template<bool conjugate = true, typename FSa, class VectorLikeX, class VectorLikeY, class VectorLikeA>
 inline void ger(gpu_engine const &engine, int M, int N, FSa alpha, VectorLikeX const &x, int incx, VectorLikeY const &y, int incy, VectorLikeA &&A, int lda){
@@ -412,7 +412,7 @@ inline void ger(gpu_engine const &engine, int M, int N, FSa alpha, VectorLikeX c
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS symmetric or Hermitian rank-1 update Xsyr() and Xher().
+ * \brief Wrapper to GPU symmetric or Hermitian rank-1 update Xsyr() and Xher().
  */
 template<bool conjugate = false, typename FSa, class VectorLikeX, class VectorLikeA>
 inline void syr(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, VectorLikeA &&A, int lda){
@@ -437,7 +437,7 @@ inline void syr(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLik
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS symmetric or Hermitian rank-1 update using packed format Xspr() and Xhpr().
+ * \brief Wrapper to GPU symmetric or Hermitian rank-1 update using packed format Xspr() and Xhpr().
  */
 template<bool conjugate = true, typename FSa, class VectorLikeX, class VectorLikeA>
 inline void spr(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, VectorLikeA &&A){
@@ -471,7 +471,7 @@ inline void spr(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLik
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS symmetric or Hermitian rank-2 update Xsyr2() and Xher2().
+ * \brief Wrapper to GPU symmetric or Hermitian rank-2 update Xsyr2() and Xher2().
  */
 template<bool conjugate = false, typename FSa, class VectorLikeX, class VectorLikeY, class VectorLikeA>
 inline void syr2(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, VectorLikeY const &y, int incy, VectorLikeA &&A, int lda){
@@ -496,7 +496,7 @@ inline void syr2(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLi
 
 /*!
  * \ingroup HALAGPUBLAS2
- * \brief Wrapper to cuBLAS symmetric or Hermitian rank-2 update in packed format Xspr2() and Xhpr2().
+ * \brief Wrapper to GPU symmetric or Hermitian rank-2 update in packed format Xspr2() and Xhpr2().
  */
 template<bool conjugate = false, typename FSa, class VectorLikeX, class VectorLikeY, class VectorLikeA>
 inline void spr2(gpu_engine const &engine, char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, VectorLikeY const &y, int incy, VectorLikeA &&A){

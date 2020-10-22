@@ -34,8 +34,11 @@
 namespace hala{
 
 /*!
+ * \internal
  * \ingroup HALACPUENGINE
  * \brief Defines the direction of CPU-GPU memory copy.
+ *
+ * \endinternal
  */
 enum class copy_direction{
     //! \brief Copy from host to device.

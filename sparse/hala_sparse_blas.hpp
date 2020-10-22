@@ -36,6 +36,23 @@ namespace hala{
 
 /*!
  * \ingroup HALASPARSEBLAS
+ * \brief Query the size of the workspace needed for sparse gemv operation.
+ *
+ * Some implementations of sparse operations require additional workspace memory
+ * which can be pre-allocated by the user to avoid repeated allocate/deallocate operations
+ * that can be expensive, e.g., in an iterative solver context.
+ * The user provided workspace needs to have size at least equal to the size returned here,
+ * the size is measured in entries of the matrix type, e.g., float or std::complex<double>.
+ *
+ * See hala::sparse_gemv().
+ */
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+size_t sparse_gemv_buffer_size(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
+    return matrix.gemv_buffer_size(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
+}
+
+/*!
+ * \ingroup HALASPARSEBLAS
  * \brief Sparse matrix vector multiplication.
  *
  * Computes \f$ y = \alpha A x + \beta y \f$.
@@ -51,8 +68,12 @@ namespace hala{
  *  sparse_gemv(trans, M, N, alpha, pntr, indx, vals, x, beta, y);
  *  sparse_gemv(engine, trans, M, N, alpha, pntr, indx, vals, x, beta, y);
  *  sparse_gemv(sparse_matrix, trans, alpha, x, beta, y);
+ *  sparse_gemv(sparse_matrix, trans, alpha, x, beta, y, workspace);
+ *  cpu_sparse_matrix::gemv(trans, alpha, x, beta, y);
+ *  cpu_sparse_matrix::gemv(trans, alpha, x, beta, y, workspace);
  * \endcode
- * The \b sparse_matrix can be either of the classes hala::cpu_sparse_matrix or hala::gpu_sparse_matrix.
+ * The \b sparse_matrix can be either of the classes hala::cpu_sparse_matrix or hala::gpu_sparse_matrix,
+ * the last overload is a member of method.
  */
 template<typename FSA, class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, typename FSB, class VectorLikeY>
 void sparse_gemv(char trans, int M, int N,
@@ -75,6 +96,23 @@ void sparse_gemv(char trans, int M, int N,
 
 /*!
  * \ingroup HALASPARSEBLAS
+ * \brief Query the size of the workspace needed for sparse gemm operation.
+ *
+ * Some implementations of sparse operations require additional workspace memory
+ * which can be pre-allocated by the user to avoid repeated allocate/deallocate operations
+ * that can be expensive, e.g., in an iterative solver context.
+ * The user provided workspace needs to have size at least equal to the size returned here,
+ * the size is measured in entries of the matrix type, e.g., float or std::complex<double>.
+ *
+ * See hala::sparse_gemm().
+ */
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+size_t sparse_gemm_buffer_size(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
+    return matrix.gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
+}
+
+/*!
+ * \ingroup HALASPARSEBLAS
  * \brief Sparse matrix-matrix multiplication.
  *
  * Computes \f$ C = \alpha op(A) op(B) + \beta C \f$ where \b A is a sparse matrix.
@@ -90,14 +128,24 @@ void sparse_gemv(char trans, int M, int N,
  *
  * Overloads:
  * \code
- *  hala::sparse_gemm(transa, trnasb, M, N, K,
- *                    alpha, pntr, indx, vals, B, beta, C, ldb =-1, ldc=-1);
- *  hala::sparse_gemm(engine, transa, trnasb, M, N, K,
- *                    alpha, pntr, indx, vals, B, ldb, beta, C, ldc);
- *  hala::sparse_gemm(engine, transa, trnasb, M, N, K,
- *                    alpha, pntr, indx, vals, B, beta, C, ldb =-1, ldc=-1);
+ *  sparse_gemm(transa, trnasb, M, N, K,
+ *              alpha, pntr, indx, vals, B, beta, C, ldb=-1, ldc=-1);
+ *  sparse_gemm(engine, transa, trnasb, M, N, K,
+ *              alpha, pntr, indx, vals, B, ldb, beta, C, ldc);
+ *  sparse_gemm(matrix, transa, trnasb, b_rows, b_cols,
+ *              alpha, B, ldb, beta, C, ldc);
+ *  sparse_gemm(matrix, transa, trnasb, b_rows, b_cols,
+ *              alpha, B, ldb, beta, C, ldc, workspace);
+ *  cpu_sparse_matrix::gemm(transa, trnasb, b_rows, b_cols,
+ *                          alpha, B, ldb, beta, C, ldc);
+ *  cpu_sparse_matrix::gemm(transa, trnasb, b_rows, b_cols,
+ *                          alpha, B, ldb, beta, C, ldc, workspace);
  * \endcode
  * The leading dimensions assume the minimum acceptable value, i.e., as if the matrices have no padding.
+ * The last two overloads are member methods of hala::cpu_sparse_matrix and gpu_sparse_matrix
+ * and the matrix signatures deviate a bit from the (M, N, K) triple when defining the dimensions.
+ * The \b workspace is a containers (or raw-arrays) with size at least equal to
+ * hala::sparse_gemm_buffer_size() with user allocate memory; used primarily on the GPU.
  */
 template<typename FSA, class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeB, typename FSB, class VectorLikeC>
 void sparse_gemm(char transa, char transb, int M, int N, int K,
@@ -157,6 +205,23 @@ void sparse_trsm(char transa, char transb, int nrhs, TriangularMat const &tri, F
 }
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section (overloads are documented with the main methods)
+
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y){
+    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y));
+}
+template<typename MatrixType, typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
+void sparse_gemv(MatrixType const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&temp){
+    matrix.gemv(trans, alpha, x, beta, std::forward<VectorLikeY>(y), std::forward<VectorLikeBuff>(temp));
+}
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeBuff>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc, VectorLikeBuff &&temp){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc, std::forward<VectorLikeBuff>(temp));
+}
+template<typename MatrixType, typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
+void sparse_gemm(MatrixType const &matrix, char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &&C, int ldc){
+    matrix.gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, std::forward<VectorLikeC>(C), ldc);
+}
 
 template<typename sp_matrix, typename FPa, class VectorLikeP, class VectorLikeI, class VectorLikeV, class VectorLikeX, typename FPb, class VectorLikeY>
 void sparse_gemv(sp_matrix const &matrix, char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &y){

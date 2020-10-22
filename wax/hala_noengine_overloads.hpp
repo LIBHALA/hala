@@ -819,8 +819,8 @@ auto ilu_temp_buffer(cpu_ilu<T> const &, engined_vector<cpu_engine, VectorLikeX>
     return engined_vector<cpu_engine, std::vector<T>>(x.engine());
 }
 template<typename T, class VectorLikeX, class VectorLikeR>
-size_t ilu_temp_buffer_size(cpu_ilu<T> const &ilu, engined_vector<cpu_engine, VectorLikeX> const&x, engined_vector<cpu_engine, VectorLikeR> __HALA_REFREF r, int num_rhs = 1){
-    return ilu_temp_buffer_size(ilu, x.vector(), r.vector(), num_rhs);
+size_t ilu_buffer_size(cpu_ilu<T> const &ilu, engined_vector<cpu_engine, VectorLikeX> const&x, engined_vector<cpu_engine, VectorLikeR> __HALA_REFREF r, int num_rhs = 1){
+    return ilu_buffer_size(ilu, x.vector(), r.vector(), num_rhs);
 }
 
 #ifdef HALA_ENABLE_GPU
@@ -832,8 +832,8 @@ auto ilu_temp_buffer(gpu_ilu<T> const &ilu, engined_vector<gpu_engine, VectorLik
     return temp;
 }
 template<typename T, class VectorLikeX, class VectorLikeR>
-size_t ilu_temp_buffer_size(gpu_ilu<T> const &ilu, engined_vector<gpu_engine, VectorLikeX> const&x, engined_vector<gpu_engine, VectorLikeR> __HALA_REFREF r, int num_rhs = 1){
-    return ilu_temp_buffer_size(ilu, x.vector(), r.vector(), num_rhs);
+size_t ilu_buffer_size(gpu_ilu<T> const &ilu, engined_vector<gpu_engine, VectorLikeX> const&x, engined_vector<gpu_engine, VectorLikeR> __HALA_REFREF r, int num_rhs = 1){
+    return ilu_buffer_size(ilu, x.vector(), r.vector(), num_rhs);
 }
 #endif
 

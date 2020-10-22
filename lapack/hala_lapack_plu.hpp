@@ -11,6 +11,7 @@
  */
 
 /*!
+ * \internal
  * \ingroup HALALAPACK
  * \file hala_lapack_plu.hpp
  * \brief HALA wrapper for LAPACK methods.
@@ -18,6 +19,7 @@
  * \copyright BSD-3-Clause
  *
  * Contains the HALA-LAPACK wrapper templates for PLU and Cholesky factorization.
+ * \endinternal
  */
 
 #define HALA_ENABLE_LAPACK

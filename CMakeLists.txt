@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(HALA VERSION 0.4.0 LANGUAGES CXX)
+project(HALA VERSION 1.0.0 LANGUAGES CXX)
 set(hala_license "BSD 3-Clause")
 
 macro(_hala_configure)

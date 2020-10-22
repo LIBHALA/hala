@@ -217,7 +217,7 @@ int solve_pcg(int max_iter, hala::get_precision_type<VectorLikeV> stop_tolerance
     auto ilu = hala::make_ilu(pntr, indx, vals, 'N');
 
     size_t buffer_size = std::max(
-                             ilu_temp_buffer_size(ilu, b, x, 1),
+                             ilu_buffer_size(ilu, b, x, 1),
                              sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 0.0, x)
                               );
     auto work_buffer = hala::new_vector(x);
