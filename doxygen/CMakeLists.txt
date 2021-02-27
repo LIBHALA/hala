@@ -66,6 +66,7 @@ doxygen_add_docs(hala_doxygen
                  hex/vex
                  examples/example_gauss_seidel.cpp
                  examples/example_gpu.cpp
+                 examples/example_vex.cpp
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../
                  COMMENT "Building the HALA documentation")
 add_custom_target(hala_documentation ALL DEPENDS hala_doxygen)

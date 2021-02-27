@@ -13,3 +13,6 @@ target_link_libraries(example_gauss_seidel HALA::HALA)
 
 # add_executable(example_cuda example_gpu.cpp)
 # target_link_libraries(example_cuda HALA::HALA)
+
+add_executable(example_vex example_vex.cpp)
+target_link_libraries(example_vex HALA::HALA)
