@@ -1,3 +1,8 @@
+### Version: development
+
+* added a full example for the VEX module
+* fixed some conflicts when using regtype::none and float or double arithmetic
+
 ### Version: 1.0
 
 * included full support for the BLAS standard
