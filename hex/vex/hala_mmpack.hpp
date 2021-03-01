@@ -101,9 +101,9 @@ namespace hala{
  * \code
  * template<typename T, hala::regtype R>
  * void scale(typename std::vector<T>::value_type alpha, std::vector<T> &x){
- *     hala::mmpack<T, R> alpha(alpha);
- *     for(size_t i=0; i<N; i += alpha.stride){
- *         auto vx = hala::load<R>(&x[i]) * alpha;
+ *     hala::mmpack<T, R> mm_alpha(alpha);
+ *     for(size_t i=0; i<N; i += mm_alpha.stride){
+ *         auto vx = hala::load<R>(&x[i]) * mm_alpha;
  *         vx.put(&x[i]);
  *     }
  * }
@@ -171,18 +171,26 @@ struct mmpack{
     operator mm_type const () const{ return data; }
 
     //! \brief Addition overload.
-    mmpack<T, R> operator + (mmpack<T, R> const &other) const{ return data + other.data; }
+    template<typename dummy = int>
+    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    operator + (mmpack<T, R> const &other) const{ return data + other.data; }
     //! \brief Subtraction overload.
-    mmpack<T, R> operator - (mmpack<T, R> const &other) const{ return data - other.data; }
+    template<typename dummy = int>
+    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    operator - (mmpack<T, R> const &other) const{ return data - other.data; }
     //! \brief Multiplication overload, also handles complex numbers.
-    mmpack<T, R> operator * (mmpack<T, R> const &other) const{
+    template<typename dummy = int>
+    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    operator * (mmpack<T, R> const &other) const{
         if (is_complex<T>::value)
             return mm_complex_mul(data, other.data);
         else
             return data * other.data;
     }
     //! \brief Division overload, also handles complex numbers.
-    mmpack<T, R> operator / (mmpack<T, R> const &other) const{
+    template<typename dummy = int>
+    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    operator / (mmpack<T, R> const &other) const{
         if (is_complex<T>::value)
             return mm_complex_div(data, other.data);
         else
@@ -383,6 +391,16 @@ inline mmpack<T, R> mmload(T const *a){ return mmpack<T, R>(a); }
 
 
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section (overloads are documented with the main methods)
+
+template<typename T, regtype R>
+std::enable_if_t<R != regtype::none or is_complex<T>::value, mmpack<T, R>> operator +(T const a, mmpack<T, R> const &b){ return b + a; }
+template<typename T, regtype R>
+std::enable_if_t<R != regtype::none or is_complex<T>::value, mmpack<T, R>> operator -(T const a, mmpack<T, R> const &b){ return mmpack<T, R>(a) - b; }
+template<typename T, regtype R>
+std::enable_if_t<R != regtype::none or is_complex<T>::value, mmpack<T, R>> operator *(T const a, mmpack<T, R> const &b){ return b * a; }
+template<typename T, regtype R>
+std::enable_if_t<R != regtype::none or is_complex<T>::value, mmpack<T, R>> operator /(T const a, mmpack<T, R> const &b){ return mmpack<T, R>(a) / b; }
+
 template<regtype R = default_regtype, typename T,
          std::enable_if_t<
                 !std::is_pointer<T>::value &&
