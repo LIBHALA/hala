@@ -101,9 +101,9 @@ namespace hala{
  * \code
  * template<typename T, hala::regtype R>
  * void scale(typename std::vector<T>::value_type alpha, std::vector<T> &x){
- *     hala::mmpack<T, R> alpha(alpha);
- *     for(size_t i=0; i<N; i += alpha.stride){
- *         auto vx = hala::load<R>(&x[i]) * alpha;
+ *     hala::mmpack<T, R> mm_alpha(alpha);
+ *     for(size_t i=0; i<N; i += mm_alpha.stride){
+ *         auto vx = hala::load<R>(&x[i]) * mm_alpha;
  *         vx.put(&x[i]);
  *     }
  * }
