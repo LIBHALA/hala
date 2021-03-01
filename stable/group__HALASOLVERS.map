@@ -1,0 +1,5 @@
+<map id="HALA Solver Algorithms" name="HALA Solver Algorithms">
+<area shape="rect" id="node1" href="$group__HALASOLVEGMRES.html" title="GMRES Solver" alt="" coords="247,5,359,32"/>
+<area shape="rect" id="node2" href="$group__HALASOLVECGBATCH.html" title="Batch Conjugate&#45;Gradient\l Solver" alt="" coords="217,57,389,98"/>
+<area shape="rect" id="node3" href="$group__HALASOLVECG.html" title="Conjugate&#45;Gradient\l Solver" alt="" coords="236,122,371,163"/>
+</map>

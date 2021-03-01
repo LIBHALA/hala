@@ -1,0 +1,5 @@
+<map id="HALA Wrapped Accelerated Extensions" name="HALA Wrapped Accelerated Extensions">
+<area shape="rect" id="node2" href="$group__HALAWAXENGINED.html" title="Engined vectors" alt="" coords="255,5,371,32"/>
+<area shape="rect" id="node3" href="$group__HALAWAXSPARSE.html" title="Sparse extensions" alt="" coords="248,56,379,83"/>
+<area shape="rect" id="node4" href="$group__HALAWAXBLAS.html" title="BLAS&#45;like extensions" alt="" coords="240,107,387,133"/>
+</map>

@@ -1,0 +1,45 @@
+<map id="common/hala_wrap_array.hpp" name="common/hala_wrap_array.hpp">
+<area shape="rect" id="node2" href="$hala__cpu__engine_8hpp_source.html" title="common/hala_cpu_engine.hpp" alt="" coords="653,80,852,107"/>
+<area shape="rect" id="node3" href="$hala__common_8hpp_source.html" title="common/hala_common.hpp" alt="" coords="661,155,844,181"/>
+<area shape="rect" id="node4" href="$hala__blas__external_8hpp_source.html" title="blas/hala_blas_external.hpp" alt="" coords="597,229,780,256"/>
+<area shape="rect" id="node39" href="$hala__intrinsics_8hpp_source.html" title="hex/vex/hala_intrinsics.hpp" alt="" coords="759,304,939,331"/>
+<area shape="rect" id="node5" href="$hala__blas__1_8hpp_source.html" title="blas/hala_blas_1.hpp" alt="" coords="589,304,733,331"/>
+<area shape="rect" id="node6" href="$hala__blas__2_8hpp_source.html" title="blas/hala_blas_2.hpp" alt="" coords="586,386,730,413"/>
+<area shape="rect" id="node7" href="$hala__blas__3_8hpp_source.html" title="blas/hala_blas_3.hpp" alt="" coords="581,475,725,502"/>
+<area shape="rect" id="node8" href="$hala__blas__overloads_8hpp_source.html" title="blas/hala_blas_overloads.hpp" alt="" coords="544,557,737,584"/>
+<area shape="rect" id="node9" href="$hala__blas_8hpp.html" title="HALA wrapper for all BLAS functions. " alt="" coords="557,632,687,659"/>
+<area shape="rect" id="node10" href="$hala__lapack__external_8hpp_source.html" title="lapack/hala_lapack\l_external.hpp" alt="" coords="555,707,689,748"/>
+<area shape="rect" id="node33" href="$hala__sparse__utils_8hpp_source.html" title="sparse/hala_sparse\l_utils.hpp" alt="" coords="391,707,525,748"/>
+<area shape="rect" id="node11" href="$hala__lapack__plu_8hpp_source.html" title="lapack/hala_lapack\l_plu.hpp" alt="" coords="555,796,689,837"/>
+<area shape="rect" id="node12" href="$hala__lapack_8hpp.html" title="HALA wrapper for LAPACK methods. " alt="" coords="543,982,701,1009"/>
+<area shape="rect" id="node13" href="$hala__lib__extensions_8hpp_source.html" title="wax/hala_lib_extensions.hpp" alt="" coords="357,1228,546,1255"/>
+<area shape="rect" id="node14" href="$hala__mixed__overloads_8hpp_source.html" title="wax/hala_mixed_overloads.hpp" alt="" coords="347,1303,551,1329"/>
+<area shape="rect" id="node15" href="$hala__extensions__checker_8hpp_source.html" title="wax/hala_extensions\l_checker.hpp" alt="" coords="375,1377,519,1419"/>
+<area shape="rect" id="node16" href="$hala__blas__extensions_8hpp_source.html" title="wax/hala_blas_extensions.hpp" alt="" coords="347,1467,547,1493"/>
+<area shape="rect" id="node17" href="$hala__sparse__extensions_8hpp_source.html" title="wax/hala_sparse_extensions.hpp" alt="" coords="340,1541,555,1568"/>
+<area shape="rect" id="node18" href="$hala__noengine__overloads_8hpp_source.html" title="wax/hala_noengine_overloads.hpp" alt="" coords="337,1616,558,1643"/>
+<area shape="rect" id="node19" href="$hala__noengine__structs_8hpp_source.html" title="wax/hala_noengine_structs.hpp" alt="" coords="197,1691,402,1717"/>
+<area shape="rect" id="node20" href="$hala__wrapped__extensions_8hpp_source.html" title="wax/hala_wrapped_extensions.hpp" alt="" coords="187,1765,412,1792"/>
+<area shape="rect" id="node21" href="$hala_8hpp.html" title="HALA main header. " alt="" coords="586,1847,711,1874"/>
+<area shape="rect" id="node26" href="$hala__solvers__core_8hpp_source.html" title="hex/solvers/hala_solvers\l_core.hpp" alt="" coords="12,1840,179,1881"/>
+<area shape="rect" id="node31" href="$hala__cholmod__defines_8hpp_source.html" title="hex/cholmod/hala_cholmod\l_defines.hpp" alt="" coords="209,1840,389,1881"/>
+<area shape="rect" id="node22" href="$hala_8h.html" title="Alias to the main HALA header. " alt="" coords="427,1937,537,1963"/>
+<area shape="rect" id="node23" href="$example__gauss__seidel_8cpp.html" title="Example of using the BLAS module of HALA. " alt="" coords="562,1929,735,1971"/>
+<area shape="rect" id="node24" href="$example__gpu_8cpp.html" title="Example of using the BLAS module of HALA. " alt="" coords="545,2272,729,2299"/>
+<area shape="rect" id="node25" href="$example__vex_8cpp.html" title="Example of using the BLAS module of HALA. " alt="" coords="810,1937,994,1963"/>
+<area shape="rect" id="node27" href="$hala__solvers__cg_8hpp_source.html" title="hex/solvers/hala_solvers\l_cg.hpp" alt="" coords="5,1929,172,1971"/>
+<area shape="rect" id="node28" href="$hala__solvers__cg__batch_8hpp_source.html" title="hex/solvers/hala_solvers\l_cg_batch.hpp" alt="" coords="280,2019,447,2060"/>
+<area shape="rect" id="node29" href="$hala__solvers__gmres_8hpp_source.html" title="hex/solvers/hala_solvers\l_gmres.hpp" alt="" coords="349,2108,516,2149"/>
+<area shape="rect" id="node30" href="$hala__solvers_8hpp.html" title="HALA solver algorithms build on the rest. " alt="" coords="475,2197,665,2224"/>
+<area shape="rect" id="node32" href="$hala__cholmod_8hpp.html" title="HALA wrapper for Cholmod functions. " alt="" coords="197,1937,402,1963"/>
+<area shape="rect" id="node34" href="$hala__sparse__structs_8hpp_source.html" title="sparse/hala_sparse\l_structs.hpp" alt="" coords="388,796,523,837"/>
+<area shape="rect" id="node35" href="$hala__sparse__core_8hpp_source.html" title="sparse/hala_sparse\l_core.hpp" alt="" coords="385,885,520,927"/>
+<area shape="rect" id="node36" href="$hala__sparse__blas_8hpp_source.html" title="sparse/hala_sparse\l_blas.hpp" alt="" coords="384,975,519,1016"/>
+<area shape="rect" id="node37" href="$hala__sparse__ilu_8hpp_source.html" title="sparse/hala_sparse\l_ilu.hpp" alt="" coords="384,1064,519,1105"/>
+<area shape="rect" id="node38" href="$hala__sparse_8hpp_source.html" title="sparse/hala_sparse.hpp" alt="" coords="371,1153,531,1180"/>
+<area shape="rect" id="node40" href="$hala__intrinsics__macros_8hpp_source.html" title="hex/vex/hala_intrinsics\l_macros.hpp" alt="" coords="774,379,929,420"/>
+<area shape="rect" id="node41" href="$hala__aligned__allocator_8hpp_source.html" title="hex/vex/hala_aligned\l_allocator.hpp" alt="" coords="785,468,929,509"/>
+<area shape="rect" id="node42" href="$hala__mmpack_8hpp_source.html" title="hex/vex/hala_mmpack.hpp" alt="" coords="771,557,950,584"/>
+<area shape="rect" id="node43" href="$hala__bindpack_8hpp_source.html" title="hex/vex/hala_bindpack.hpp" alt="" coords="771,632,951,659"/>
+<area shape="rect" id="node44" href="$hala__vex_8hpp_source.html" title="hex/vex/hala_vex.hpp" alt="" coords="826,893,975,919"/>
+</map>

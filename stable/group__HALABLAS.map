@@ -1,0 +1,5 @@
+<map id="HALA BLAS Wrapper Templates" name="HALA BLAS Wrapper Templates">
+<area shape="rect" id="node1" href="$group__HALABLAS1.html" title="BLAS level 1 templates" alt="" coords="267,5,425,32"/>
+<area shape="rect" id="node2" href="$group__HALABLAS2.html" title="BLAS level 2 templates" alt="" coords="267,56,425,83"/>
+<area shape="rect" id="node3" href="$group__HALABLAS3.html" title="BLAS level 3 templates" alt="" coords="267,107,425,133"/>
+</map>

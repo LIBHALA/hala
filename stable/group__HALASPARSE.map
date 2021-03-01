@@ -1,0 +1,5 @@
+<map id="HALA Sparse Matrix Templates" name="HALA Sparse Matrix Templates">
+<area shape="rect" id="node2" href="$group__HALASPARSEBLAS.html" title="Sparse BLAS Multiply\l and Solve" alt="" coords="207,5,358,47"/>
+<area shape="rect" id="node3" href="$group__HALASPARSECORE.html" title="Core Sparse Operations" alt="" coords="201,71,364,98"/>
+<area shape="rect" id="node4" href="$group__HALASPARSEILU.html" title="Sparse ILU preconditioner" alt="" coords="196,122,369,149"/>
+</map>

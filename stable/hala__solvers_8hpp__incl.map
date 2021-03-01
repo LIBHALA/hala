@@ -1,0 +1,38 @@
+<map id="hex/solvers/hala_solvers.hpp" name="hex/solvers/hala_solvers.hpp">
+<area shape="rect" id="node2" href="$hala__solvers__gmres_8hpp_source.html" title="hala_solvers_gmres.hpp" alt="" coords="483,80,645,107"/>
+<area shape="rect" id="node3" href="$hala__solvers__cg__batch_8hpp_source.html" title="hala_solvers_cg_batch.hpp" alt="" coords="474,155,654,181"/>
+<area shape="rect" id="node4" href="$hala__solvers__cg_8hpp_source.html" title="hala_solvers_cg.hpp" alt="" coords="493,229,635,256"/>
+<area shape="rect" id="node5" href="$hala__solvers__core_8hpp_source.html" title="hala_solvers_core.hpp" alt="" coords="488,304,640,331"/>
+<area shape="rect" id="node6" href="$hala__wrapped__extensions_8hpp_source.html" title="hala_wrapped_extensions.hpp" alt="" coords="465,379,663,405"/>
+<area shape="rect" id="node7" href="$hala__noengine__structs_8hpp_source.html" title="hala_noengine_structs.hpp" alt="" coords="475,453,653,480"/>
+<area shape="rect" id="node8" href="$hala__sparse__extensions_8hpp_source.html" title="hala_sparse_extensions.hpp" alt="" coords="471,603,657,629"/>
+<area shape="rect" id="node50" href="$hala__noengine__overloads_8hpp_source.html" title="hala_noengine_overloads.hpp" alt="" coords="535,528,729,555"/>
+<area shape="rect" id="node9" href="$hala__blas__extensions_8hpp_source.html" title="hala_blas_extensions.hpp" alt="" coords="478,677,650,704"/>
+<area shape="rect" id="node10" href="$hala__extensions__checker_8hpp_source.html" title="hala_extensions_checker.hpp" alt="" coords="467,752,661,779"/>
+<area shape="rect" id="node11" href="$hala__mixed__overloads_8hpp_source.html" title="hala_mixed_overloads.hpp" alt="" coords="476,827,652,853"/>
+<area shape="rect" id="node12" href="$hala__lib__extensions_8hpp_source.html" title="hala_lib_extensions.hpp" alt="" coords="483,901,645,928"/>
+<area shape="rect" id="node13" href="$hala__sparse_8hpp_source.html" title="hala_sparse.hpp" alt="" coords="457,976,575,1003"/>
+<area shape="rect" id="node47" href="$hala__lapack_8hpp.html" title="HALA wrapper for LAPACK methods. " alt="" coords="589,1051,705,1077"/>
+<area shape="rect" id="node14" href="$hala__sparse__ilu_8hpp_source.html" title="hala_sparse_ilu.hpp" alt="" coords="421,1051,558,1077"/>
+<area shape="rect" id="node15" href="$hala__sparse__blas_8hpp_source.html" title="hala_sparse_blas.hpp" alt="" coords="407,1125,555,1152"/>
+<area shape="rect" id="node16" href="$hala__sparse__core_8hpp_source.html" title="hala_sparse_core.hpp" alt="" coords="399,1200,548,1227"/>
+<area shape="rect" id="node17" href="$hala__sparse__structs_8hpp_source.html" title="hala_sparse_structs.hpp" alt="" coords="423,1275,587,1301"/>
+<area shape="rect" id="node18" href="$hala__sparse__utils_8hpp_source.html" title="hala_sparse_utils.hpp" alt="" coords="451,1349,599,1376"/>
+<area shape="rect" id="node19" href="$hala__blas_8hpp.html" title="HALA wrapper for all BLAS functions. " alt="" coords="530,1424,633,1451"/>
+<area shape="rect" id="node20" href="$hala__blas__overloads_8hpp_source.html" title="hala_blas_overloads.hpp" alt="" coords="499,1499,664,1525"/>
+<area shape="rect" id="node21" href="$hala__blas__3_8hpp_source.html" title="hala_blas_3.hpp" alt="" coords="523,1573,639,1600"/>
+<area shape="rect" id="node22" href="$hala__blas__2_8hpp_source.html" title="hala_blas_2.hpp" alt="" coords="523,1648,639,1675"/>
+<area shape="rect" id="node23" href="$hala__blas__1_8hpp_source.html" title="hala_blas_1.hpp" alt="" coords="523,1723,639,1749"/>
+<area shape="rect" id="node24" href="$hala__blas__external_8hpp_source.html" title="hala_blas_external.hpp" alt="" coords="504,1797,659,1824"/>
+<area shape="rect" id="node25" href="$hala__common_8hpp_source.html" title="hala_common.hpp" alt="" coords="517,1872,645,1899"/>
+<area shape="rect" id="node26" href="$hala__cpu__engine_8hpp_source.html" title="hala_cpu_engine.hpp" alt="" coords="509,1947,653,1973"/>
+<area shape="rect" id="node27" href="$hala__wrap__array_8hpp.html" title="HALA wrapper simple arrays. " alt="" coords="510,2021,653,2048"/>
+<area shape="rect" id="node28" href="$hala__input__checker_8hpp_source.html" title="hala_input_checker.hpp" alt="" coords="502,2096,661,2123"/>
+<area shape="rect" id="node29" href="$hala__types__checker_8hpp_source.html" title="hala_types_checker.hpp" alt="" coords="500,2171,663,2197"/>
+<area shape="rect" id="node30" href="$hala__types__caster_8hpp_source.html" title="hala_types_caster.hpp" alt="" coords="505,2245,658,2272"/>
+<area shape="rect" id="node31" href="$hala__types__helpers_8hpp_source.html" title="hala_types_helpers.hpp" alt="" coords="502,2320,661,2347"/>
+<area shape="rect" id="node32" href="$hala__vector__defines_8hpp_source.html" title="hala_vector_defines.hpp" alt="" coords="500,2395,663,2421"/>
+<area shape="rect" id="node33" href="$hala__core_8hpp_source.html" title="hala_core.hpp" alt="" coords="530,2469,633,2496"/>
+<area shape="rect" id="node48" href="$hala__lapack__plu_8hpp_source.html" title="hala_lapack_plu.hpp" alt="" coords="583,1125,723,1152"/>
+<area shape="rect" id="node49" href="$hala__lapack__external_8hpp_source.html" title="hala_lapack_external.hpp" alt="" coords="573,1200,742,1227"/>
+</map>

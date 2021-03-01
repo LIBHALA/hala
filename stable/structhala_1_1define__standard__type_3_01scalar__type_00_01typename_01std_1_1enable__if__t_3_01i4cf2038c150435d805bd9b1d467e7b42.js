@@ -1,0 +1,4 @@
+var structhala_1_1define__standard__type_3_01scalar__type_00_01typename_01std_1_1enable__if__t_3_01i4cf2038c150435d805bd9b1d467e7b42 =
+[
+    [ "value_type", "structhala_1_1define__standard__type_3_01scalar__type_00_01typename_01std_1_1enable__if__t_3_01i4cf2038c150435d805bd9b1d467e7b42.html#a1b7796796186ec6dd2f92ccfe8c52b00", null ]
+];

@@ -1,0 +1,11 @@
+<map id="HALA CUDA and ROCM Wrapper Templates" name="HALA CUDA and ROCM Wrapper Templates">
+<area shape="rect" id="node1" href="$group__HALAGPUSPARSE.html" title="cuSparse Methods" alt="" coords="243,5,374,32"/>
+<area shape="rect" id="node3" href="$group__HALAGPUBLAS0.html" title="GPU&#45;BLAS Extensions" alt="" coords="229,56,388,83"/>
+<area shape="rect" id="node4" href="$group__HALAGPUBLAS1.html" title="GPU&#45;BLAS Level 1" alt="" coords="241,107,376,133"/>
+<area shape="rect" id="node5" href="$group__HALAGPUBLAS2.html" title="GPU&#45;BLAS Level 2" alt="" coords="241,157,376,184"/>
+<area shape="rect" id="node6" href="$group__HALAGPUBLAS3.html" title="GPU&#45;BLAS Level 3" alt="" coords="241,208,376,235"/>
+<area shape="rect" id="node7" href="$group__HALAGPUENGINE.html" title="Engine Class" alt="" coords="259,259,359,285"/>
+<area shape="rect" id="node8" href="$group__HALAGPUVECTOR.html" title="GPU Vector Class" alt="" coords="243,309,374,336"/>
+<area shape="rect" id="node9" href="$group__HALAGPUSPARSEILU.html" title="Sparse incomplete Lower\l&#45;Upper (ILU) factorization" alt="" coords="224,361,393,402"/>
+<area shape="rect" id="node10" href="$group__HALAGPUWRAP.html" title="GPU Array Wrapper" alt="" coords="239,427,378,453"/>
+</map>
