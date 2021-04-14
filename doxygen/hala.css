@@ -12,6 +12,9 @@
 /*
  *  Global font and page justify
  */
+html, body {
+        height: 100% !important;
+}
 html *{
     font-size: 1em;
     color: #000;
@@ -25,15 +28,18 @@ div.contents {
 }
 
 #doc-content {
+	height: calc(100% - 92px);
     background: #F5F5F5;
 }
 
 #side-nav {
     width: 19em;
+    height: calc(100% - 92px);
 }
 
 #nav-tree {
     background: #F5F5F5;
+    height: 100%;
 }
 
 /*
