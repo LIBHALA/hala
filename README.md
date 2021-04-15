@@ -1,4 +1,4 @@
-# HALA
+# HALA (Test)
 
 Handy Accelerated Linear Algebra **HALA** is a collection of C++ templates that wrap around  the accelerated linear algebra standards BLAS, LAPACK, CUDA, and ROCM with focus on the ease of use and the ability to express general algorithms independent from the backend CPU or GPU device. Additional templates are provided to interface with SuiteSparse-Cholmod, intrinsic CPU vectorization methods, and also offers basic implementation of some Krylov solvers.
 
