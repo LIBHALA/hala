@@ -15,22 +15,30 @@ jobs:
       matrix:
         runner: [ubuntu-20.04]
         compiler: [clang++, g++]
+        fortran_compiler: [gfortran]
 
     steps:
       - uses: actions/checkout@v2
       - name: Build
         run: >
           rm -rf build && mkdir -p build && cd build &&
+          git clone https://github.com/xianyi/OpenBLAS &&
+          cd OpenBLAS && make FC=${{ matrix.fortran_compiler }} &&
+          export BLASDIR=`pwd` &&
+          cd .. && mkdir -p build_hala && cd build_hala &&
           cmake
           -D CMAKE_INSTALL_PREFIX=./hala_install
           -D CMAKE_CXX_FLAGS="-O3 -Wall -Wextra -Wshadow -pedantic"
           -D CMAKE_CXX_COMPILER=${{ matrix.compiler }}
           -D HALA_GPU_BACKEND=NONE
           -D HALA_EXTENDED_REGISTERS=SSE
-          -D HALA_ENABLE_EXAMPLES=ON .. &&
+          -D HALA_ENABLE_TESTING=ON
+          -D BLAS_LIBRARIES="$BLASDIR/libopenblas.so;-lgfortran;-pthread"
+          -D LAPACK_LIBRARIES="$BLASDIR/libopenblas.so;-lgfortran;-pthread"
+          -D HALA_ENABLE_EXAMPLES=ON ../.. &&
           make -j4
       - name: Test
-        run: cd build && ctest -V --no-compress-output -T Test
+        run: cd build/build_hala && ctest -V --no-compress-output -T Test
       - name: Install
-        run: cd build && make install && make test_install
+        run: cd build/build_hala && make install && make test_install
 
