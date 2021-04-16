@@ -168,8 +168,14 @@ inline void sbmv(char uplo, int N, int k, FSa alpha, const VectorLikeA &A, int l
     auto fsalpha = get_cast<scalar_type>(alpha);
     auto fsbeta  = get_cast<scalar_type>(beta);
 
+    #ifdef HALA_HAS_ZSBMV
     call_backend6<conjugate, scalar_type>(ssbmv_, dsbmv_, chbmv_, zhbmv_, csbmv_, zsbmv_,
                                           &uplo, &N, &k, pconvert(&fsalpha), convert(A), &lda, convert(x), &incx, pconvert(&fsbeta), cconvert(y), &incy);
+    #else
+    static_assert(conjugate or not hala::is_complex<scalar_type>::value, "Missing required BLAS extension for CSBMV/ZSBMV");
+    call_backend<scalar_type>(ssbmv_, dsbmv_, chbmv_, zhbmv_,
+                              &uplo, &N, &k, pconvert(&fsalpha), convert(A), &lda, convert(x), &incx, pconvert(&fsbeta), cconvert(y), &incy);
+    #endif
 }
 
 /*!
@@ -496,8 +502,14 @@ inline void syr2(char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, Ve
     using scalar_type = get_scalar_type<VectorLikeX>;
     auto fsalpha = get_cast<scalar_type>(alpha);
 
+    #ifdef HALA_HAS_ZSYR2
     call_backend6<conjugate, scalar_type>(ssyr2_, dsyr2_, cher2_, zher2_, csyr2_, zsyr2_,
                                           &uplo, &N, pconvert(&fsalpha), convert(x), &incx, convert(y), &incy, cconvert(A), &lda);
+    #else
+    static_assert(conjugate or not hala::is_complex<scalar_type>::value, "Missing required BLAS extension for CSYR2/ZSYR2");
+    call_backend<scalar_type>(ssyr2_, dsyr2_, cher2_, zher2_,
+                                        &uplo, &N, pconvert(&fsalpha), convert(x), &incx, convert(y), &incy, cconvert(A), &lda);
+    #endif
 }
 
 /*!
@@ -527,8 +539,14 @@ inline void spr2(char uplo, int N, FSa alpha, VectorLikeX const &x, int incx, Ve
     using scalar_type = get_scalar_type<VectorLikeX>;
     auto fsalpha = get_cast<scalar_type>(alpha);
 
+    #ifdef HALA_HAS_ZSPR2
     call_backend6<conjugate, scalar_type>(sspr2_, dspr2_, chpr2_, zhpr2_, cspr2_, zspr2_,
                                           &uplo, &N, pconvert(&fsalpha), convert(x), &incx, convert(y), &incy, cconvert(A));
+    #else
+    static_assert(conjugate or not hala::is_complex<scalar_type>::value, "Missing required BLAS extension for CSPR2/ZSPR2");
+    call_backend<scalar_type>(sspr2_, dspr2_, chpr2_, zhpr2_,
+                                      &uplo, &N, pconvert(&fsalpha), convert(x), &incx, convert(y), &incy, cconvert(A));
+    #endif
 }
 
 #ifndef __HALA_DOXYGEN_SKIP

@@ -64,7 +64,7 @@ void test_batch_max_norm(cengine const &engine){
         ref_norm = std::max(ref_norm, hala::norm2(N, &x[hala::hala_size(i, N)], 1));
 
     auto nrm = hala::batch_max_norm2(mengine batch_size, bind(x));
-    hassert(testnum(nrm, ref_norm));
+    hassert(testnum(nrm, ref_norm, 3.0)); // error is high in MKL, OK in OpenBLAS
 }
 
 template<typename T, int, class cengine>

@@ -69,8 +69,10 @@ template<typename T, int, class cengine> void test_symv(cengine const &engine){
     make_banded(k, k, A);
     refgemm('N', 'N', N, 1, N, 2.0, A, x, 0.0, yref);
     As = pack_banded(k, 0, A);
+    #ifdef HALA_HAS_ZSBMV
     hala::sbmv(mengine 'L', N, k, 2, bind(As), bind(x), 0.0f, bind(y));
     hassert(testvec(y, yref));
+    #endif
 
     A = make_hermitian<T>(N);
     y = yref;
@@ -239,12 +241,16 @@ template<typename T, int, class cengine> void test_rank12(cengine const &engine)
     refgemm('N', 'N', N, N, 1, 2.0, x, y, 1.0, Aref);
     refgemm('N', 'N', N, N, 1, 2.0, y, x, 1.0, Aref);
     make_triangular('U', 'N', Aref);
+    #ifdef HALA_HAS_ZSYR2
     hala::syr2(mengine 'U', N, 2.0, bind(x), bind(y), bind(A));
     hassert(testvec(Aref, A));
+    #endif
 
     A = pack_triangular('U', Ao);
+    #ifdef HALA_HAS_ZSPR2
     hala::spr2(mengine 'U', N, 2.0, bind(x), bind(y), bind(A));
     hassert(testvec(pack_triangular('U', Aref), A));
+    #endif
 
     // testing for the Hermitian case
     conjx = x;
