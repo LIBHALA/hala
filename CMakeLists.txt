@@ -3,28 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 project(HALA VERSION 1.0.0 LANGUAGES CXX)
 set(hala_license "BSD 3-Clause")
 
-macro(_hala_configure)
-    # configures the options in the header hala_config.hpp
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/hala_config.hpp"
-                   "${CMAKE_CURRENT_BINARY_DIR}/configured/hala_config.hpp")
-    target_sources(HALA INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/configured/hala_config.hpp>
-                                  $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/hala_config.hpp>)
-    target_include_directories(HALA INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/configured/>)
-endmacro(_hala_configure)
-
-macro(_hala_add_sources)
-    # adds a bunch of source files from a given folder
-    cmake_parse_arguments(_hala_sources "" "PATH" "FILES" ${ARGN})
-    target_include_directories(HALA INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_hala_sources_PATH}>)
-    foreach(_hala_file ${_hala_sources_FILES})
-        #message(" adding: ${CMAKE_CURRENT_SOURCE_DIR}/${_hala_sources_PATH}/${_hala_file}") # good for debugging
-        target_sources(HALA INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_hala_sources_PATH}/${_hala_file}>
-                                      $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/${_hala_file}>)
-    endforeach()
-    unset(_hala_file)
-    unset(_hala_sources_FILES)
-    unset(_hala_sources_PATH)
-endmacro(_hala_add_sources)
+# load all the _hala_* macros
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/hala_helpers.cmake)
 
 ######## Default Debug ########
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "" OR NOT CMAKE_BUILD_TYPE)
@@ -146,6 +126,9 @@ if (NOT BLAS_LIBRARIES)
 endif()
 
 target_link_libraries(HALA INTERFACE ${BLAS_LIBRARIES})
+_hala_check_symbol(SYMBOL zsyr2_ LIBRARIES ${BLAS_LIBRARIES} RESULT HALA_HAS_ZSYR2)
+_hala_check_symbol(SYMBOL zspr2_ LIBRARIES ${BLAS_LIBRARIES} RESULT HALA_HAS_ZSPR2)
+_hala_check_symbol(SYMBOL zsbmv_ LIBRARIES ${BLAS_LIBRARIES} RESULT HALA_HAS_ZSBMV)
 
 ############ LAPACK ##########
 if (NOT LAPACK_LIBRARIES)

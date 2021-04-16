@@ -99,4 +99,22 @@
  */
 #define HALA_VERSION_PATCH @HALA_VERSION_PATCH@
 
+/*!
+ * \ingroup HALACMAKE
+ * \brief Check if BLAS supports the csyr2/zsyr2 extensions.
+ */
+#cmakedefine HALA_HAS_ZSYR2
+
+/*!
+ * \ingroup HALACMAKE
+ * \brief Check if BLAS supports the cspr2/zspr2 extensions.
+ */
+#cmakedefine HALA_HAS_ZSPR2
+
+/*!
+ * \ingroup HALACMAKE
+ * \brief Check if BLAS supports the csbmv/csbmv extensions.
+ */
+#cmakedefine HALA_HAS_ZSBMV
+
 #endif

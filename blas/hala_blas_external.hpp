@@ -130,10 +130,12 @@ void ssbmv_(const char *uplo, const int *N, const int *k, const float *alpha, co
             const float *x, const int *incx, const float *beta, float *y, const int *incy);
 void dsbmv_(const char *uplo, const int *N, const int *k, const double *alpha, const double *A, const int *lda,
             const double *x, const int *incx, const double *beta, double *y, const int *incy);
+#ifdef HALA_HAS_ZSBMV
 void csbmv_(const char *uplo, const int *N, const int *k, const std::complex<float> *alpha, const std::complex<float> *A, const int *lda,
             const std::complex<float> *x, const int *incx, const std::complex<float> *beta, std::complex<float> *y, const int *incy);
 void zsbmv_(const char *uplo, const int *N, const int *k, const std::complex<double> *alpha, const std::complex<double> *A, const int *lda,
             const std::complex<double> *x, const int *incx, const std::complex<double> *beta, std::complex<double> *y, const int *incy);
+#endif
 void chbmv_(const char *uplo, const int *N, const int *k, const std::complex<float> *alpha, const std::complex<float> *A, const int *lda,
             const std::complex<float> *x, const int *incx, const std::complex<float> *beta, std::complex<float> *y, const int *incy);
 void zhbmv_(const char *uplo, const int *N, const int *k, const std::complex<double> *alpha, const std::complex<double> *A, const int *lda,
@@ -226,10 +228,12 @@ void zher_(const char *uplo, const int *N, const std::complex<double> *alpha, co
 
 void ssyr2_(const char *uplo, const int *N, const float *alpha, const float *x, const int *incx, const float *y, const int *incy, float *A, const int *lda);
 void dsyr2_(const char *uplo, const int *N, const double *alpha, const double *x, const int *incx, const double *y, const int *incy, double *A, const int *lda);
+#ifdef HALA_HAS_ZSYR2
 void csyr2_(const char *uplo, const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx,
             const std::complex<float> *y, const int *incy, std::complex<float> *A, const int *lda);
 void zsyr2_(const char *uplo, const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx,
             const std::complex<double> *y, const int *incy, std::complex<double> *A, const int *lda);
+#endif
 void cher2_(const char *uplo, const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx,
             const std::complex<float> *y, const int *incy, std::complex<float> *A, const int *lda);
 void zher2_(const char *uplo, const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx,
@@ -244,10 +248,12 @@ void zhpr_(const char *uplo, const int *N, const std::complex<double> *alpha, co
 
 void sspr2_(const char *uplo, const int *N, const float *alpha, const float *x, const int *incx, const float *y, const int *incy, float *A);
 void dspr2_(const char *uplo, const int *N, const double *alpha, const double *x, const int *incx, const double *y, const int *incy, double *A);
+#ifdef HALA_HAS_ZSPR2
 void cspr2_(const char *uplo, const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx,
             const std::complex<float> *y, const int *incy, std::complex<float> *A);
 void zspr2_(const char *uplo, const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx,
             const std::complex<double> *y, const int *incy, std::complex<double> *A);
+#endif
 void chpr2_(const char *uplo, const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx,
             const std::complex<float> *y, const int *incy, std::complex<float> *A);
 void zhpr2_(const char *uplo, const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx,
