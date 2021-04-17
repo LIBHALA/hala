@@ -296,11 +296,8 @@ int solve_gmres_ilu(mixed_engine const &engine,
     auto gvals = engine.gpu().load(vals);
     auto gb = engine.gpu().load(b);
     auto gx = gpu_bind_vector(engine.gpu(), x);
-    return solve_gmres(engine.gpu(), stop, restart, gpntr, gindx, gvals,
-                       [&](auto const &inx, auto &outr)->void{
-                           ilu_apply(ilu.cilu(), inx, outr);
-                       },
-                       gb, gx);
+
+    return solve_gmres_ilu(engine.gpu(), stop, restart, gpntr, gindx, gvals, ilu.cilu(), gb, gx);
 }
 #endif
 
@@ -329,6 +326,7 @@ int solve_gmres_ilu(compute_engine const &engine,
                     VectorLikeB const &b, VectorLikeX &x, char policy = 'N'){
 
     auto ilu = make_ilu(engine, pntr, indx, vals, policy);
+
     return solve_gmres_ilu(engine, stop, restart, pntr, indx, vals, ilu, b, x);
 }
 

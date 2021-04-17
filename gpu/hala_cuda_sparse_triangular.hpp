@@ -125,11 +125,11 @@ public:
                 cusparseScsrsv2_bufferSize, cusparseDcsrsv2_bufferSize, cusparseCcsrsv2_bufferSize, cusparseZcsrsv2_bufferSize,
                 "cuSparse::Xcsrsv2_bufferSize()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, infosv[id], &buff_size);
 
-            auto f77_buffer = make_gpu_vector<int>(buff_size / sizeof(int), engine().device());
+            auto tmp_buffer = make_gpu_vector<int>(buff_size / sizeof(int), engine().device());
 
             cuda_call_backend<value_type>(
                 cusparseScsrsv2_analysis, cusparseDcsrsv2_analysis, cusparseCcsrsv2_analysis, cusparseZcsrsv2_analysis,
-                "cuSparse::Xcsrsv2_analysis()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, infosv[id], policy(), convert(f77_buffer));
+                "cuSparse::Xcsrsv2_analysis()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, infosv[id], policy(), convert(tmp_buffer));
         }
         return infosv[id];
     }

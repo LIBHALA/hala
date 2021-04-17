@@ -264,7 +264,7 @@ T* gpu_allocate(int gpu_device, size_t num_elements){
 template<typename T>
 void gpu_free(T *gpu_data){
     if (gpu_data != nullptr)
-        check_cuda(cudaFree(gpu_data), "hala::gpu_free()");
+        check_cuda(cudaFree(gpu_data), "cudaFree()");
 }
 
 /*!
