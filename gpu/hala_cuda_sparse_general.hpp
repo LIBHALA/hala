@@ -38,6 +38,11 @@ cudaDataType_t get_cuda_dtype(){
         return CUDA_C_64F;
     }
 }
+#if (__HALA_CUDA_API_VERSION__ >= 11020)
+#define HALA_CUSPARSE_SPMV_ALG_DEFAULT CUSPARSE_SPMV_ALG_DEFAULT
+#else
+#define HALA_CUSPARSE_SPMV_ALG_DEFAULT CUSPARSE_MV_ALG_DEFAULT
+#endif
 #endif
 
 /*!
@@ -300,7 +305,7 @@ public:
 
         auto xdesc = make_cuda_dvec_description(x, (cuda_trans == CUSPARSE_OPERATION_NON_TRANSPOSE) ? cols : rows);
         auto ydesc = make_cuda_dvec_description(y, (cuda_trans == CUSPARSE_OPERATION_NON_TRANSPOSE) ? rows : cols);
-        check_cuda( cusparseSpMV(rengine, cuda_trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), CUSPARSE_MV_ALG_DEFAULT, convert(buff)),
+        check_cuda( cusparseSpMV(rengine, cuda_trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, convert(buff)),
                     "cusparseSpMV()");
     }
     //! \brief Performs matrix vector product, see hala::sparse_gemv().
@@ -490,7 +495,7 @@ protected:
 
         auto palpha = get_pointer<value_type>(alpha);
         auto pbeta  = get_pointer<value_type>(beta);
-        check_cuda(cusparseSpMV_bufferSize(rengine, trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), CUSPARSE_MV_ALG_DEFAULT, size),
+        check_cuda(cusparseSpMV_bufferSize(rengine, trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, size),
                    "cusparseSpMV_bufferSize");
     }
     //! \brief Helper wrapper around cusparseSpMM_bufferSize().
