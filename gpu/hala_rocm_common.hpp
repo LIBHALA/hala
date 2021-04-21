@@ -249,6 +249,27 @@ void gpu_free(T *gpu_data){
 
 /*!
  * \ingroup HALAROCMCOMMON
+ * \brief Deleter for the ROCm handles.
+ */
+struct rocm_deleter{
+    //! \brief Initialize the deleter with the ownership.
+    rocm_deleter(ptr_ownership const set_ownership) : ownership(set_ownership){}
+    //! \brief Deleter rocBlas handle.
+    void delete_handle(rocblas_handle h){ check_rocm( rocblas_destroy_handle(h), "rocblas_destroy_handle()" ); }
+    //! \brief Deleter rocSparse handle.
+    void delete_handle(rocsparse_handle h){ check_rocm( rocsparse_destroy_handle(h), "rocsparse_destroy_handle()" ); }
+    //! \brief Delete a pointer, but only if owned.
+    template<typename T>
+    void operator() (T* p){
+        if (ownership == ptr_ownership::own){ delete_handle(p); }
+    }
+private:
+    //! \brief Remember the ownership of the handle.
+    ptr_ownership ownership;
+};
+
+/*!
+ * \ingroup HALAROCMCOMMON
  * \brief Identical to std::copy_n() but works on cpu-gpu or gpu-gpu pair of arrays.
  */
 template<copy_direction dir, typename T>

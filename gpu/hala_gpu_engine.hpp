@@ -54,16 +54,6 @@ private:
      */
     int cgpu;
 
-#ifndef HALA_ENABLE_CUDA
-    /*!
-     * \internal
-     * \brief Indicates whether the handles are owned by the engine and to be deleted by the destructor.
-     *
-     * \endinternal
-     */
-    bool own_handles;
-#endif
-
 public:
     #ifdef HALA_ENABLE_CUDA
     //! \brief Default constructor, create handles on the device given by \b deviceid.
@@ -76,7 +66,6 @@ public:
         #endif
     {
         assert((cgpu >= 0) && (cgpu < gpu_device_count()));
-
     }
     //! \brief Take an alias of the handles without owning them.
     gpu_engine(int deviceid, cublasHandle_t extern_cublas, cusparseHandle_t extern_cusparse, cusolverDnHandle_t extern_cusolver) :
@@ -95,18 +84,6 @@ public:
 
     //! \brief Copy with non-owning references.
     gpu_engine(gpu_engine const &other) : gpu_engine(other.cgpu, other, other, other){}
-
-    //! \brief Move initialize.
-    gpu_engine(gpu_engine &&other) = default;
-
-    //! \brief Move another class into this one.
-    gpu_engine& operator =(gpu_engine &&other) = default;
-
-    //! \brief Cannot copy into by creating non-owning aliases.
-    gpu_engine& operator =(gpu_engine const &other){
-        *this = gpu_engine(other);
-        return *this;
-    }
 
     //! \brief Set cuda stream for this engine.
     void set_stream(cudaStream_t streamid) const{
@@ -215,61 +192,40 @@ public:
 
     #ifdef HALA_ENABLE_ROCM
     //! \brief ROCM overload for default engine constructor.
-    gpu_engine(int deviceid = 0) : cgpu(deviceid), own_handles(true), hrocblas(nullptr), hrocsparse(nullptr){
+    gpu_engine(int deviceid = 0) : cgpu(deviceid),
+        hrocblas(make_rocblas_handle(cgpu), rocm_deleter(ptr_ownership::own)),
+        hrocsparse(make_rocsparse_handle(cgpu), rocm_deleter(ptr_ownership::own))
+    {
         assert((cgpu >= 0) && (cgpu < gpu_device_count()));
-        check_rocm(hipSetDevice(cgpu), "hala::gpu_engine() set device in constructor");
-
-        check_rocm( rocblas_create_handle(&hrocblas), "rocblas_create_handle()" );
-        check_rocm( rocblas_set_pointer_mode(hrocblas, rocblas_pointer_mode_host), "rocblas_set_pointer_mode()" );
-        check_rocm( rocsparse_create_handle(&hrocsparse), "rocsparse_create_handle()"  );
-        check_rocm( rocsparse_set_pointer_mode(hrocsparse, rocsparse_pointer_mode_host), "rocsparse_set_pointer_mode()" );
     }
-
-    //! \brief Destructor, clears the handles (if using owning references).
-    ~gpu_engine(){ clear_handles(); }
-
-protected:
-    //! \brief Clear the created ROCM handles.
-    void clear_handles(){
-        if (own_handles){
-            if (hrocblas != nullptr)
-                check_rocm( rocblas_destroy_handle(hrocblas), "rocblas_destroy_handle()" );
-            if (hrocsparse != nullptr)
-                check_rocm( rocsparse_destroy_handle(hrocsparse), "rocsparse_destroy_handle()" );
-        }
-    }
-
-public:
 
     //! \brief Take control of the handles without owning them.
     gpu_engine(int deviceid, rocblas_handle extern_rocblas, rocsparse_handle extern_rocsparse) :
-        cgpu(deviceid), own_handles(false), hrocblas(extern_rocblas), hrocsparse(extern_rocsparse){
+        cgpu(deviceid),
+        hrocblas(extern_rocblas, rocm_deleter(ptr_ownership::not_own)),
+        hrocsparse(extern_rocsparse, rocm_deleter(ptr_ownership::not_own))
+    {
         assert((cgpu >= 0) && (cgpu < gpu_device_count()));
     }
 
     //! \brief Copy with non-owning references.
     gpu_engine(gpu_engine const &other) : gpu_engine(other.cgpu, other, other){}
 
-    //! \brief Move initialize.
-    gpu_engine(gpu_engine &&other)
-        : cgpu(other.cgpu), own_handles(other.own_handles), hrocblas(std::exchange(other.hrocblas, nullptr)),
-          hrocsparse(std::exchange(other.hrocsparse, nullptr)){}
-
     //! \brief Automatic return of the rocBlas handle.
-    operator rocblas_handle () const{ return hrocblas; }
+    operator rocblas_handle () const{ return hrocblas.get(); }
     //! \brief Automatic return of the rocSparse handle.
-    operator rocsparse_handle () const{ return hrocsparse; }
+    operator rocsparse_handle () const{ return hrocsparse.get(); }
 
     void set_active_device() const{ hipSetDevice(cgpu); }
 
-    void set_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas, rocblas_pointer_mode_device), "rocblas_set_pointer_device()" ); }
-    void reset_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas, rocblas_pointer_mode_host), "rocblas_set_pointer_device()" ); }
+    void set_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas.get(), rocblas_pointer_mode_device), "rocblas_set_pointer_device()" ); }
+    void reset_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas.get(), rocblas_pointer_mode_host), "rocblas_set_pointer_device()" ); }
     void set_cusparse_device_pntr() const{ rocm_ignore(0); }
     void reset_cusparse_device_pntr() const{ rocm_ignore(0); }
 
     rocblas_pointer_mode get_blas_pointer_mode() const{
         rocblas_pointer_mode mode;
-        check_rocm( rocblas_get_pointer_mode(hrocblas, &mode), "rocblas_get_pointer_mode()" );
+        check_rocm( rocblas_get_pointer_mode(hrocblas.get(), &mode), "rocblas_get_pointer_mode()" );
         return mode;
     }
 
@@ -279,27 +235,45 @@ public:
      *
      * \endinternal
      */
-    mutable rocblas_handle hrocblas;
+    mutable std::unique_ptr<typename std::remove_pointer<rocblas_handle>::type, rocm_deleter> hrocblas;
     /*!
      * \internal
      * \brief The handle used for all rocSparse calls, inherited by all higher engines.
      *
      * \endinternal
      */
-    mutable rocsparse_handle hrocsparse;
+    mutable std::unique_ptr<typename std::remove_pointer<rocsparse_handle>::type, rocm_deleter> hrocsparse;
 
-    // generic non-backend-specific code
+    //! \brief Make a rocBlas handle.
+    static rocblas_handle make_rocblas_handle(int device){
+        hipSetDevice(device);
+        rocblas_handle trocblas;
+        check_rocm( rocblas_create_handle(&trocblas), "rocblas_create_handle()" );
+        check_rocm( rocblas_set_pointer_mode(trocblas, rocblas_pointer_mode_host), "rocblas_set_pointer_mode()" );
+        return trocblas;
+    }
+
+    //! \brief Make a rocSparse handle.
+    static rocsparse_handle make_rocsparse_handle(int device){
+        hipSetDevice(device);
+        rocsparse_handle trocsparse;
+        check_rocm( rocsparse_create_handle(&trocsparse), "rocsparse_create_handle()"  );
+        check_rocm( rocsparse_set_pointer_mode(trocsparse, rocsparse_pointer_mode_host), "rocsparse_set_pointer_mode()" );
+        return trocsparse;
+    }
+    #endif
+
+    //! \brief Move initialize.
+    gpu_engine(gpu_engine &&other) = default;
+
+    //! \brief Move another class into this one.
+    gpu_engine& operator =(gpu_engine &&other) = default;
 
     //! \brief Cannot copy into by creating non-owning aliases.
     gpu_engine& operator =(gpu_engine const &other){
-        clear_handles();
-        own_handles = false;
-        hrocblas = other.hrocblas;
-        hrocsparse = other.hrocsparse;
-        cgpu = other.cgpu;
+        *this = gpu_engine(other);
         return *this;
     }
-    #endif
 
     //! \brief Return the device id associated with the engine.
     int device() const{ return cgpu; }
