@@ -39,6 +39,17 @@ namespace hala{
 
 /*!
  * \ingroup HALACHECKTYPESHELP
+ * \brief Enums to expressively indicate ownership of a pointer.
+ */
+enum class ptr_ownership{
+    //! \brief Does own the pointer.
+    own,
+    //! \brief Does not own the pointer.
+    not_own
+};
+
+/*!
+ * \ingroup HALACHECKTYPESHELP
  * \brief Struct to specialize that returns the C++ standard equivalent of each type.
  */
 template<typename, typename = void> struct define_standard_type{};

@@ -269,6 +269,33 @@ void gpu_free(T *gpu_data){
 
 /*!
  * \ingroup HALACUDACOMMON
+ * \brief Deleter for the CUDA handles.
+ */
+struct cuda_deleter{
+    //! \brief Initialize the deleter with the ownership.
+    cuda_deleter(ptr_ownership const set_ownership) : ownership(set_ownership){}
+    //! \brief Deleter cuBlas handle.
+    void delete_handle(cublasHandle_t h){ check_cuda( cublasDestroy(h), "cublasDestroy()" ); }
+    //! \brief Deleter cuSparse handle.
+    void delete_handle(cusparseHandle_t h){ check_cuda( cusparseDestroy(h), "cusparseDestroy()" ); }
+    //! \brief Deleter cusolverDn handle.
+    void delete_handle(cusolverDnHandle_t h){ check_cuda( cusolverDnDestroy(h), "cusolverDnDestroy()" ); }
+    #if (__HALA_CUDA_API_VERSION__ < 10020)
+    //! \brief Deleter cusparseMatDescr_t handle.
+    void delete_handle(cusparseMatDescr_t h){ check_cuda( cusparseDestroyMatDescr(h), "cusparseDestroyMatDescr()" ); }
+    #endif
+    //! \brief Delete a pointer, but only if owned.
+    template<typename T>
+    void operator() (T* p){
+        if (ownership == ptr_ownership::own){ delete_handle(p); }
+    }
+private:
+    //! \brief Remember the ownership of the handle.
+    ptr_ownership ownership;
+};
+
+/*!
+ * \ingroup HALACUDACOMMON
  * \brief Identical to std::copy_n() but works on cpu-gpu or gpu-gpu pair of arrays.
  */
 template<copy_direction dir, typename T>
