@@ -47,73 +47,6 @@ cudaDataType_t get_cuda_dtype(){
 
 /*!
  * \ingroup HALACUDACOMMON
- * \brief Wrapper around  used in sparse mat-vec and mat-mat operations.
- *
- * Accepted types are:
- * - cusparseSpMatDescr_t, cusparseDnVecDescr_t, cusparseDnMatDescr_t
- * - cusparseMatDescr_t, csrilu02Info_t, csrsv2Info_t
- */
-template<typename T>
-struct cuda_struct_description{
-    //! \brief Construct a null description.
-    cuda_struct_description() : desc(nullptr){
-        static_assert(std::is_same<T, cusparseMatDescr_t>::value ||
-                      std::is_same<T, csrilu02Info_t>::value ||
-                      std::is_same<T, csrsv2Info_t>::value
-                      #if (__HALA_CUDA_API_VERSION__ >= 10000)
-                      || std::is_same<T, cusparseSpMatDescr_t>::value
-                      || std::is_same<T, cusparseDnVecDescr_t>::value
-                      || std::is_same<T, cusparseDnMatDescr_t>::value
-                      #endif
-                      , "cuda pointer holder with incompatible type");
-        if __HALA_CONSTEXPR_IF__ (std::is_same<T, csrilu02Info_t>::value){
-            cusparseCreateCsrilu02Info(pconvert(&desc));
-        }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, csrsv2Info_t>::value){
-            cusparseCreateCsrsv2Info(pconvert(&desc));
-        }
-    };
-    //! \brief Destructor, deletes the description.
-    ~cuda_struct_description(){
-        if __HALA_CONSTEXPR_IF__ (std::is_same<T, cusparseMatDescr_t>::value){
-            if (desc != nullptr) cusparseDestroyMatDescr(pconvert(desc));
-        }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, csrilu02Info_t>::value){
-            if (desc != nullptr) cusparseDestroyCsrilu02Info(pconvert(desc));
-        }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, csrsv2Info_t>::value){
-            if (desc != nullptr) cusparseDestroyCsrsv2Info(pconvert(desc));
-        }
-        #if (__HALA_CUDA_API_VERSION__ >= 10000)
-        else if __HALA_CONSTEXPR_IF__ (std::is_same<T, cusparseSpMatDescr_t>::value){
-            if (desc != nullptr) cusparseDestroySpMat(pconvert(desc));
-        }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, cusparseDnVecDescr_t>::value){
-            if (desc != nullptr) cusparseDestroyDnVec(pconvert(desc));
-        }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, cusparseDnMatDescr_t>::value){
-            if (desc != nullptr) cusparseDestroyDnMat(pconvert(desc));
-        }
-        #endif
-    }
-
-    //! \brief Wrappers to pointer aliases cannot be copied.
-    cuda_struct_description(cuda_struct_description<T> const &other) = delete;
-    //! \brief Wrappers to pointer aliases cannot be copied.
-    cuda_struct_description<T>& operator = (cuda_struct_description<T> const &other) = delete;
-
-    //! \brief Trivially move the description.
-    cuda_struct_description(cuda_struct_description<T> &&other) : desc(std::exchange(other.desc, nullptr)){}
-    //! \brief Trivially move the description.
-    cuda_struct_description<T>& operator = (cuda_struct_description<T> &&other){
-        cuda_struct_description<T> temp(std::move(other));
-        std::swap(desc, temp.desc);
-        return *this;
-    }
-
-    //! \brief Returns the description, automatic conversion.
-    operator T () const{ return desc; }
-    //! \brief Holds the description pointer.
-    T desc;
-};
-
-/*!
- * \ingroup HALACUDACOMMON
  * \brief Creates sparse matrix description.
  *
  * Note that this is internal API and doesn't come with assert() checks,
@@ -123,15 +56,15 @@ struct cuda_struct_description{
  * - \b diag sets unit/non-unit diagonal, but can be something else to skip the mode, e.g., 'S'
  */
 inline auto make_cuda_mat_description(char type, char uplo, char diag){
-    cuda_struct_description<cusparseMatDescr_t> result;
-    check_cuda( cusparseCreateMatDescr(&result.desc), "cuSparse::CreateMatDescr()");
-    cusparseSetMatType(result.desc, (type == 'G') ? CUSPARSE_MATRIX_TYPE_GENERAL : CUSPARSE_MATRIX_TYPE_TRIANGULAR);
-    cusparseSetMatIndexBase(result.desc, CUSPARSE_INDEX_BASE_ZERO);
+    cusparseMatDescr_t result;
+    check_cuda( cusparseCreateMatDescr(&result), "cuSparse::CreateMatDescr()");
+    cusparseSetMatType(result, (type == 'G') ? CUSPARSE_MATRIX_TYPE_GENERAL : CUSPARSE_MATRIX_TYPE_TRIANGULAR);
+    cusparseSetMatIndexBase(result, CUSPARSE_INDEX_BASE_ZERO);
     if (check_diag(diag))
-        cusparseSetMatDiagType(result.desc, (is_n(diag)) ? CUSPARSE_DIAG_TYPE_NON_UNIT : CUSPARSE_DIAG_TYPE_UNIT);
+        cusparseSetMatDiagType(result, (is_n(diag)) ? CUSPARSE_DIAG_TYPE_NON_UNIT : CUSPARSE_DIAG_TYPE_UNIT);
     if (check_uplo(uplo))
-        cusparseSetMatFillMode(result.desc, (is_l(uplo)) ? CUSPARSE_FILL_MODE_LOWER : CUSPARSE_FILL_MODE_UPPER);
-    return result;
+        cusparseSetMatFillMode(result, (is_l(uplo)) ? CUSPARSE_FILL_MODE_LOWER : CUSPARSE_FILL_MODE_UPPER);
+    return cuda_unique_ptr(result);
 }
 
 #if (__HALA_CUDA_API_VERSION__ >= 10000)
@@ -151,12 +84,12 @@ inline auto make_cuda_mat_description(int rows, int cols, int nnz,
     void *uindx = const_cast<void*>(reinterpret_cast<void const*>(get_data(indx)));
     void *uvals = const_cast<void*>(reinterpret_cast<void const*>(get_data(vals)));
 
-    cuda_struct_description<cusparseSpMatDescr_t> result;
-    check_cuda(cusparseCreateCsr(&result.desc, (int64_t) rows, (int64_t) cols, (int64_t) nnz, upntr, uindx, uvals,
+    cusparseSpMatDescr_t result;
+    check_cuda(cusparseCreateCsr(&result, (int64_t) rows, (int64_t) cols, (int64_t) nnz, upntr, uindx, uvals,
                                  CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, cuda_type),
                "cuSparse::CreateCsr()");
 
-    return result;
+    return cuda_unique_ptr(result);
 }
 
 /*!
@@ -172,12 +105,12 @@ inline auto make_cuda_dvec_description(VectorLike const &x, int effective_size){
 
     void *ux = const_cast<void*>(reinterpret_cast<void const*>(get_data(x)));
 
-    cuda_struct_description<cusparseDnVecDescr_t> result;
-    cusparseStatus_t status = cusparseCreateDnVec(&result.desc, (int64_t) effective_size, ux, cuda_type);
+    cusparseDnVecDescr_t result;
+    cusparseStatus_t status = cusparseCreateDnVec(&result, (int64_t) effective_size, ux, cuda_type);
 
     check_cuda(status, "cuSparse::CreateDnVec()");
 
-    return result;
+    return cuda_unique_ptr(result);
 }
 
 /*!
@@ -193,13 +126,23 @@ inline auto make_cuda_dmat_description(VectorLike const &A, int rows, int cols, 
 
     void *ua = const_cast<void*>(reinterpret_cast<void const*>(get_data(A)));
 
-    cuda_struct_description<cusparseDnMatDescr_t> result;
-    check_cuda(cusparseCreateDnMat(&result.desc, (int64_t) rows, (int64_t) cols, (int64_t) lda, ua, cuda_type, CUSPARSE_ORDER_COL), "cuSparse::CreateDnMat()");
+    cusparseDnMatDescr_t result;
+    check_cuda(cusparseCreateDnMat(&result, (int64_t) rows, (int64_t) cols, (int64_t) lda, ua, cuda_type, CUSPARSE_ORDER_COL), "cuSparse::CreateDnMat()");
 
-    return result;
+    return cuda_unique_ptr(result);
 }
 
 #endif
+
+/*!
+ * \ingroup HALACUDACOMMON
+ * \brief Create wrapped csrilu02Info_t for ILU preconditioning.
+ */
+inline std::unique_ptr<typename std::remove_pointer<csrilu02Info_t>::type, cuda_deleter> make_csrilu02info(){
+    csrilu02Info_t result;
+    cusparseCreateCsrilu02Info(&result);
+    return std::unique_ptr<typename std::remove_pointer<csrilu02Info_t>::type, cuda_deleter>(result, cuda_deleter(ptr_ownership::own));
+}
 
 /*!
  * \ingroup HALAGPU
@@ -305,8 +248,7 @@ public:
 
         auto xdesc = make_cuda_dvec_description(x, (cuda_trans == CUSPARSE_OPERATION_NON_TRANSPOSE) ? cols : rows);
         auto ydesc = make_cuda_dvec_description(y, (cuda_trans == CUSPARSE_OPERATION_NON_TRANSPOSE) ? rows : cols);
-        check_cuda( cusparseSpMV(rengine, cuda_trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, convert(buff)),
-                    "cusparseSpMV()");
+        check_cuda( cusparseSpMV(rengine, cuda_trans, palpha, desc.get(), xdesc.get(), pbeta, ydesc.get(), get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, convert(buff)), "cusparseSpMV()");
     }
     //! \brief Performs matrix vector product, see hala::sparse_gemv().
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
@@ -328,14 +270,14 @@ public:
             return (is_c(transb)) ? hala_size(K, N) * sizeof(value_type) : 0;
         #endif
 
-        cuda_struct_description<cusparseDnMatDescr_t> bdesc = make_cuda_dmat_description(B, b_rows, b_cols, ldb);
-        cuda_struct_description<cusparseDnMatDescr_t> cdesc = make_cuda_dmat_description(C, M, N, ldc);
+        auto bdesc = make_cuda_dmat_description(B, b_rows, b_cols, ldb);
+        auto cdesc = make_cuda_dmat_description(C, M, N, ldc);
         auto palpha = get_pointer<value_type>(alpha);
         auto pbeta  = get_pointer<value_type>(beta);
         cusparseOperation_t cuda_transa = trans_to_cuda_sparse<value_type>(transa);
         cusparseOperation_t cuda_transb = trans_to_cuda_sparse<value_type>(transb);
 
-        return get_gemm_buffer(cuda_transa, cuda_transb, palpha, bdesc, pbeta, cdesc);
+        return get_gemm_buffer(cuda_transa, cuda_transb, palpha, bdesc.get(), pbeta, cdesc.get());
     }
     //! \brief Performs matrix-matrix product with external workspace buffer, see hala::sparse_gemv().
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
@@ -387,7 +329,7 @@ public:
             constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_SPMM_ALG_DEFAULT;
             #endif
 
-            check_cuda( cusparseSpMM(rengine, cuda_transa, cuda_transb, palpha, desc, bdesc, pbeta, cdesc,
+            check_cuda( cusparseSpMM(rengine, cuda_transa, cuda_transb, palpha, desc.get(), bdesc.get(), pbeta, cdesc.get(),
                                      cuda_type, spmm_alg, convert(temp)),
                         "cusparseSpMM()");
 
@@ -495,21 +437,21 @@ protected:
 
         auto palpha = get_pointer<value_type>(alpha);
         auto pbeta  = get_pointer<value_type>(beta);
-        check_cuda(cusparseSpMV_bufferSize(rengine, trans, palpha, desc, xdesc, pbeta, ydesc, get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, size),
+        check_cuda(cusparseSpMV_bufferSize(rengine, trans, palpha, desc.get(), xdesc.get(), pbeta, ydesc.get(), get_cuda_dtype<value_type>(), HALA_CUSPARSE_SPMV_ALG_DEFAULT, size),
                    "cusparseSpMV_bufferSize");
     }
     //! \brief Helper wrapper around cusparseSpMM_bufferSize().
     template<typename FSA, typename FSB>
     size_t get_gemm_buffer(cusparseOperation_t transa, cusparseOperation_t transb,
-                           FSA alpha, cuda_struct_description<cusparseDnMatDescr_t> const &bdesc,
-                           FSB beta, cuda_struct_description<cusparseDnMatDescr_t> const &cdesc) const{
+                           FSA alpha, cusparseDnMatDescr_t const bdesc,
+                           FSB beta, cusparseDnMatDescr_t const cdesc) const{
         #if (__HALA_CUDA_API_VERSION__ < 11000)
         constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_MM_ALG_DEFAULT;
         #else
         constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_SPMM_ALG_DEFAULT;
         #endif
         size_t bsize = 0;
-        check_cuda( cusparseSpMM_bufferSize(rengine, transa, transb, alpha, desc, bdesc, beta, cdesc, get_cuda_dtype<value_type>(), spmm_alg, &bsize),
+        check_cuda( cusparseSpMM_bufferSize(rengine, transa, transb, alpha, desc.get(), bdesc, beta, cdesc, get_cuda_dtype<value_type>(), spmm_alg, &bsize),
                     "cusparseSpMM_bufferSize()");
         return bsize;
     }
@@ -521,7 +463,7 @@ private:
     T const* rvals;
     int rows, cols, nnz;
     #if (__HALA_CUDA_API_VERSION__ >= 10000)
-    cuda_struct_description<cusparseSpMatDescr_t> desc;
+    std::unique_ptr<typename std::remove_pointer<cusparseSpMatDescr_t>::type, cuda_deleter> desc;
     mutable size_t size_buffer_n, size_buffer_t, size_buffer_c;
     #endif
 };

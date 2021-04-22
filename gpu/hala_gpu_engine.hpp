@@ -184,7 +184,7 @@ public:
         cusparseSetMatType(tmat_gen, CUSPARSE_MATRIX_TYPE_GENERAL);
         cusparseSetMatIndexBase(tmat_gen, CUSPARSE_INDEX_BASE_ZERO);
         cusparseSetMatDiagType(tmat_gen, CUSPARSE_DIAG_TYPE_NON_UNIT);
-        return std::unique_ptr<typename std::remove_pointer<cusparseMatDescr_t>::type, cuda_deleter>(ptr_ownership::own));
+        return cuda_unique_ptr(tmat_gen);
     }
     #endif
 

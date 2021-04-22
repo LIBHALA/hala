@@ -41,12 +41,12 @@ public:
                           )
         : rengine(cengine), rpntr(get_data(pn)), rindx(get_data(in)), rvals(get_standard_data(va)),
         nrows(get_size_int(pn) - 1), nz(get_size_int(in)), buff_size(0),
-        cdesc(make_rocsparse_triangular_description(uplo, diag))
+        cdesc(make_rocsparse_triangular_description(uplo, diag)), info(make_rocsparse_mat_info())
     {
         assert( get_size(in) == get_size(va) );
 
         rocm_call_backend<value_type>(rocsparse_scsrsv_buffer_size, rocsparse_dcsrsv_buffer_size, rocsparse_ccsrsv_buffer_size, rocsparse_zcsrsv_buffer_size,
-            "csrsv_buffer_size", rengine, rocsparse_operation_none, nrows, nz, cdesc, pconvert(rvals), pconvert(rpntr), pconvert(rindx), info, pconvert(&buff_size));
+            "csrsv_buffer_size", rengine, rocsparse_operation_none, nrows, nz, cdesc.get(), pconvert(rvals), pconvert(rpntr), pconvert(rindx), info.get(), pconvert(&buff_size));
         buff_size /= sizeof(value_type);
     }
 
@@ -65,17 +65,17 @@ public:
     ~gpu_triangular_matrix(){}
 
     //! \brief Return the matrix description.
-    rocsparse_mat_descr description() const{ return cdesc.desc; }
+    rocsparse_mat_descr description() const{ return cdesc.get(); }
     //! \brief Return the analysis info for vector solve.
     template<class VectorLike>
     rocsparse_mat_info analysis(rocsparse_operation trans, VectorLike &&buff) const{
         rocm_call_backend<value_type>(rocsparse_scsrsv_analysis, rocsparse_dcsrsv_analysis, rocsparse_ccsrsv_analysis, rocsparse_zcsrsv_analysis,
-            "csrsv_analysis", rengine, trans, nrows, nz, cdesc, pconvert(rvals), pconvert(rpntr), pconvert(rindx), info,
+            "csrsv_analysis", rengine, trans, nrows, nz, cdesc.get(), pconvert(rvals), pconvert(rpntr), pconvert(rindx), info.get(),
             rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, cconvert(buff));
-        return info.desc;
+        return info.get();
     }
     //! \brief Return the current analysis info.
-    rocsparse_mat_info analysis() const{ return info.desc; }
+    rocsparse_mat_info analysis() const{ return info.get(); }
 
     //! \brief Return the alias to the pntr data.
     int const* pntr() const{ return rpntr; }
@@ -112,7 +112,7 @@ public:
         runtime_assert(rocm_trans != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsv operations.");
 
         rocm_call_backend<value_type>(rocsparse_scsrsv_solve, rocsparse_dcsrsv_solve, rocsparse_ccsrsv_solve, rocsparse_zcsrsv_solve,
-            "csrsv_solve", rengine, rocm_trans, nrows, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
+            "csrsv_solve", rengine, rocm_trans, nrows, nz, palpha, cdesc.get(), vals(), rpntr, rindx,
             analysis(rocm_trans, temp), convert(b), cconvert(x), rocsparse_solve_policy_auto, cconvert(temp));
     }
     //! \brief Returns the size required for the temporary buffers.
@@ -131,8 +131,8 @@ public:
 
         size_t bsize = 0;
         rocm_call_backend<value_type>(rocsparse_scsrsm_buffer_size, rocsparse_dcsrsm_buffer_size, rocsparse_ccsrsm_buffer_size, rocsparse_zcsrsm_buffer_size,
-            "csrsm_buffer_size", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
-            convert(B), ldb, info.desc, rocsparse_solve_policy_auto, pconvert(&bsize));
+            "csrsm_buffer_size", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.get(), vals(), rpntr, rindx,
+            convert(B), ldb, info.get(), rocsparse_solve_policy_auto, pconvert(&bsize));
         return bsize / sizeof(value_type);
     }
     //! \brief Matrix matrix product with a user-provided buffer.
@@ -150,12 +150,12 @@ public:
         runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
 
         rocm_call_backend<value_type>(rocsparse_scsrsm_analysis, rocsparse_dcsrsm_analysis, rocsparse_ccsrsm_analysis, rocsparse_zcsrsm_analysis,
-                "csrsm_analysis", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
-                convert(B), ldb, info.desc, rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, cconvert(temp));
+                "csrsm_analysis", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.get(), vals(), rpntr, rindx,
+                convert(B), ldb, info.get(), rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, cconvert(temp));
 
         rocm_call_backend<value_type>(rocsparse_scsrsm_solve, rocsparse_dcsrsm_solve, rocsparse_ccsrsm_solve, rocsparse_zcsrsm_solve,
-                "csrsm_solve", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.desc, vals(), rpntr, rindx,
-                convert(B), ldb, info.desc, rocsparse_solve_policy_auto, cconvert(temp));
+                "csrsm_solve", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.get(), vals(), rpntr, rindx,
+                convert(B), ldb, info.get(), rocsparse_solve_policy_auto, cconvert(temp));
     }
     //! \brief Matrix vector product.
     template<typename FPA, class VectorLikeB, class VectorLikeX>
@@ -177,8 +177,8 @@ private:
     int nrows, nz;
     size_t buff_size;
 
-    rocm_struct_description<rocsparse_mat_descr> cdesc;
-    rocm_struct_description<rocsparse_mat_info> info;
+    std::unique_ptr<typename std::remove_pointer<rocsparse_mat_descr>::type, rocm_deleter> cdesc;
+    std::unique_ptr<typename std::remove_pointer<rocsparse_mat_info>::type, rocm_deleter> info;
     char rpolicy;
 };
 

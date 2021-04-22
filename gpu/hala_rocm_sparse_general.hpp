@@ -26,70 +26,29 @@
 namespace hala{
 
 /*!
- * \internal
- * \ingroup HALAROCMCOMMON
- * \brief RAII wrapper around ROCM mat-description and mat-info.
- *
- * Creates an instance of rocsparse_mat_descr or rocsparse_mat_info and deletes with the destructor.
- * \endinternal
- */
-template<typename T>
-struct rocm_struct_description{
-    //! \brief Construct an empty struct ready to be used.
-    rocm_struct_description() : desc(nullptr){
-        static_assert(std::is_same<T, rocsparse_mat_descr>::value or
-                      std::is_same<T, rocsparse_mat_info>::value,
-                      "Incorrect type T for rocm_struct_description<T>");
-        if __HALA_CONSTEXPR_IF__ (std::is_same<T, rocsparse_mat_descr>::value){
-            check_rocm( rocsparse_create_mat_descr(pconvert(&desc)), "rocsparse_create_mat_descr()");
-        }else __HALA_CONSTEXPR_IF__ if (std::is_same<T, rocsparse_mat_info>::value){
-            check_rocm( rocsparse_create_mat_info(pconvert(&desc)), "rocsparse_create_mat_info()");
-        }
-    }
-    //! \brief Destructor, frees all used memory.
-    ~rocm_struct_description(){
-        if (desc != nullptr){
-            if __HALA_CONSTEXPR_IF__ (std::is_same<T, rocsparse_mat_descr>::value){
-                check_rocm( rocsparse_destroy_mat_descr(pconvert(desc)), "rocsparse_destroy_mat_descr()");
-            }else if __HALA_CONSTEXPR_IF__ (std::is_same<T, rocsparse_mat_info>::value){
-                check_rocm( rocsparse_destroy_mat_info(pconvert(desc)), "rocsparse_destroy_mat_info()");
-            }
-        }
-    }
-
-    //! \brief No copy constructor.
-    rocm_struct_description(rocm_struct_description<T> const&) = delete;
-    //! \brief Can move construct.
-    rocm_struct_description(rocm_struct_description<T> &&other) : desc(std::exchange(other.desc, nullptr)){};
-
-    //! \brief Cannot copy assign.
-    rocm_struct_description<T>& operator = (rocm_struct_description<T> const&) = delete;
-    //! \brief Can move assign.
-    rocm_struct_description<T>& operator = (rocm_struct_description<T> &&other){
-        rocm_struct_description<T> temp(std::move(other));
-        std::swap(desc, temp.desc);
-        return *this;
-    }
-
-    //! \brief Automatically convert to the wrapped type.
-    operator T () const { return desc; }
-    //! \brief Wrapper pointer.
-    T desc;
-};
-
-/*!
  * \ingroup HALAROCMCOMMON
  * \brief Factory method for a general matrix description.
  *
  * \param diag specifies whether the matrix is uint or non-unit diagonal
  */
-inline rocm_struct_description<rocsparse_mat_descr> make_rocsparse_general_description(char diag = 'N'){
+inline auto make_rocsparse_general_description(char diag = 'N'){
     assert( check_diag(diag) );
-    rocm_struct_description<rocsparse_mat_descr> desc;
-    rocsparse_set_mat_type(desc, rocsparse_matrix_type_general);
-    rocsparse_set_mat_index_base(desc, rocsparse_index_base_zero);
-    rocsparse_set_mat_diag_type(desc, (is_n(diag)) ? rocsparse_diag_type_non_unit : rocsparse_diag_type_unit);
-    return desc;
+    rocsparse_mat_descr result;
+    check_rocm( rocsparse_create_mat_descr(&result), "rocsparse_create_mat_descr()");
+    rocsparse_set_mat_type(result, rocsparse_matrix_type_general);
+    rocsparse_set_mat_index_base(result, rocsparse_index_base_zero);
+    rocsparse_set_mat_diag_type(result, (is_n(diag)) ? rocsparse_diag_type_non_unit : rocsparse_diag_type_unit);
+    return rocm_unique_ptr(result);
+}
+
+/*!
+ * \ingroup HALAROCMCOMMON
+ * \brief Factory method for a general matrix info.
+ */
+inline auto make_rocsparse_mat_info(){
+    rocsparse_mat_info result;
+    check_rocm( rocsparse_create_mat_info(&result), "rocsparse_create_mat_info()");
+    return rocm_unique_ptr(result);
 }
 /*!
  * \ingroup HALAROCMCOMMON
@@ -98,15 +57,16 @@ inline rocm_struct_description<rocsparse_mat_descr> make_rocsparse_general_descr
  * \param uplo specifies whether the matrix has upper or lower fill
  * \param diag specifies whether the matrix is uint or non-unit diagonal
  */
-inline rocm_struct_description<rocsparse_mat_descr> make_rocsparse_triangular_description(char uplo, char diag){
+inline auto make_rocsparse_triangular_description(char uplo, char diag){
     assert( check_uplo(uplo) );
     assert( check_diag(diag) );
-    rocm_struct_description<rocsparse_mat_descr> desc;
-    rocsparse_set_mat_type(desc, rocsparse_matrix_type_general);
-    rocsparse_set_mat_index_base(desc, rocsparse_index_base_zero);
-    rocsparse_set_mat_fill_mode(desc, (is_l(uplo)) ? rocsparse_fill_mode_lower : rocsparse_fill_mode_upper);
-    rocsparse_set_mat_diag_type(desc, (is_n(diag)) ? rocsparse_diag_type_non_unit : rocsparse_diag_type_unit);
-    return desc;
+    rocsparse_mat_descr result;
+    check_rocm( rocsparse_create_mat_descr(&result), "rocsparse_create_mat_descr()");
+    rocsparse_set_mat_type(result, rocsparse_matrix_type_general);
+    rocsparse_set_mat_index_base(result, rocsparse_index_base_zero);
+    rocsparse_set_mat_fill_mode(result, (is_l(uplo)) ? rocsparse_fill_mode_lower : rocsparse_fill_mode_upper);
+    rocsparse_set_mat_diag_type(result, (is_n(diag)) ? rocsparse_diag_type_non_unit : rocsparse_diag_type_unit);
+    return rocm_unique_ptr(result);
 }
 
 #ifndef __HALA_DOXYGEN_SKIP
@@ -165,7 +125,7 @@ public:
         rocsparse_mat_info info = nullptr;
 
         rocm_call_backend<value_type>(rocsparse_scsrmv, rocsparse_dcsrmv, rocsparse_ccsrmv, rocsparse_zcsrmv,
-            "csrmv()", rengine, rocm_trans, rows, cols, nnz, palpha, desc, pconvert(rvals), pconvert(rpntr), pconvert(rindx), info, convert(x), pbeta, cconvert(y));
+            "csrmv()", rengine, rocm_trans, rows, cols, nnz, palpha, desc.get(), pconvert(rvals), pconvert(rpntr), pconvert(rindx), info, convert(x), pbeta, cconvert(y));
     }
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
     void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y) const{
@@ -199,10 +159,10 @@ public:
             // employing manual out-of-place conj-transpose for B
             geam(rengine, 'C', 'C', K, N, 1.0, B, ldb, 0.0, B, ldb, temp, K);
             rocm_call_backend<value_type>(rocsparse_scsrmm, rocsparse_dcsrmm, rocsparse_ccsrmm, rocsparse_zcsrmm,
-                "csrmm()", rengine, rocm_transa, rocsparse_operation_none, M, N, K, nnz, palpha, desc, convert(rvals), convert(rpntr), convert(rindx), convert(temp), K, pbeta, cconvert(C), ldc);
+                "csrmm()", rengine, rocm_transa, rocsparse_operation_none, M, N, K, nnz, palpha, desc.get(), convert(rvals), convert(rpntr), convert(rindx), convert(temp), K, pbeta, cconvert(C), ldc);
         }else{
         rocm_call_backend<value_type>(rocsparse_scsrmm, rocsparse_dcsrmm, rocsparse_ccsrmm, rocsparse_zcsrmm,
-                "csrmm()", rengine, rocm_transa, rocm_transb, M, N, K, nnz, palpha, desc, convert(rvals), convert(rpntr), convert(rindx), convert(B), ldb, pbeta, cconvert(C), ldc);
+                "csrmm()", rengine, rocm_transa, rocm_transb, M, N, K, nnz, palpha, desc.get(), convert(rvals), convert(rpntr), convert(rindx), convert(B), ldb, pbeta, cconvert(C), ldc);
         }
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
@@ -216,7 +176,7 @@ private:
     int const *rpntr, *rindx;
     T const* rvals;
     int rows, cols, nnz;
-    rocm_struct_description<rocsparse_mat_descr> desc;
+    std::unique_ptr<typename std::remove_pointer<rocsparse_mat_descr>::type, rocm_deleter> desc;
 };
 
 template<class VectorLikeP, class VectorLikeI, class VectorLikeV>

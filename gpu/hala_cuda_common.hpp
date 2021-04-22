@@ -280,9 +280,20 @@ struct cuda_deleter{
     void delete_handle(cusparseHandle_t h){ check_cuda( cusparseDestroy(h), "cusparseDestroy()" ); }
     //! \brief Deleter cusolverDn handle.
     void delete_handle(cusolverDnHandle_t h){ check_cuda( cusolverDnDestroy(h), "cusolverDnDestroy()" ); }
-    #if (__HALA_CUDA_API_VERSION__ < 10020)
     //! \brief Deleter cusparseMatDescr_t handle.
     void delete_handle(cusparseMatDescr_t h){ check_cuda( cusparseDestroyMatDescr(h), "cusparseDestroyMatDescr()" ); }
+    //! \brief Deleter csrilu02Info_t handle.
+    void delete_handle(csrilu02Info_t h){ check_cuda( cusparseDestroyCsrilu02Info(h), "cusparseDestroyCsrilu02Info()" ); }
+    //! \brief Deleter csrsv2Info_t handle.
+    void delete_handle(csrsv2Info_t h){ check_cuda( cusparseDestroyCsrsv2Info(h), "cusparseDestroyCsrsv2Info()" ); }
+    #if (__HALA_CUDA_API_VERSION__ >= 10000)
+    //! \brief Deleter cusparseSpMatDescr_t handle.
+    void delete_handle(cusparseSpMatDescr_t h){ check_cuda( cusparseDestroySpMat(h), "cusparseDestroySpMat()" ); }
+    //! \brief Deleter cusparseDnVecDescr_t handle.
+    void delete_handle(cusparseDnVecDescr_t h){ check_cuda( cusparseDestroyDnVec(h), "cusparseDestroyDnVec()" ); }
+    //! \brief Deleter cusparseDnMatDescr_t handle.
+    void delete_handle(cusparseDnMatDescr_t h){ check_cuda( cusparseDestroyDnMat(h), "cusparseDestroyDnMat()" ); }
+
     #endif
     //! \brief Delete a pointer, but only if owned.
     template<typename T>
@@ -293,6 +304,15 @@ private:
     //! \brief Remember the ownership of the handle.
     ptr_ownership ownership;
 };
+
+/*!
+ * \ingroup HALACUDACOMMON
+ * \brief Wraps a pointer handle into a std::unique_ptr variable with the hala::cuda_deleter in own mode.
+ */
+template<typename handle>
+inline auto cuda_unique_ptr(handle h){
+    return std::unique_ptr<typename std::remove_pointer<handle>::type, cuda_deleter>(h, cuda_deleter(ptr_ownership::own));
+}
 
 /*!
  * \ingroup HALACUDACOMMON

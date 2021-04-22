@@ -58,26 +58,28 @@ template<typename T> struct gpu_ilu{
         #ifdef HALA_ENABLE_CUDA
         cusparseSolvePolicy_t rpolicy = ((policy == 'L') || (policy == 'l')) ? CUSPARSE_SOLVE_POLICY_USE_LEVEL : CUSPARSE_SOLVE_POLICY_NO_LEVEL;
 
+        auto infoM = make_csrilu02info();
         auto descM = make_cuda_mat_description('G', 'S', 'S');
 
         hala::vcopy(rengine, mvals, ilu);
 
         int buff_size = 0;
         cuda_call_backend<value_type>(cusparseScsrilu02_bufferSize, cusparseDcsrilu02_bufferSize, cusparseCcsrilu02_bufferSize, cusparseZcsrilu02_bufferSize,
-                          "cuSparse::Xcsrilu02_bufferSize()", rengine, num_rows, nnz, descM, convert(ilu), convert(mpntr), convert(mindx), infoM, &buff_size);
+                          "cuSparse::Xcsrilu02_bufferSize()", rengine, num_rows, nnz, descM.get(), convert(ilu), convert(mpntr), convert(mindx), infoM.get(), &buff_size);
 
         auto work_buffer = make_gpu_vector<int>(buff_size / sizeof(int), rengine.device());
 
         cuda_call_backend<value_type>(cusparseScsrilu02_analysis, cusparseDcsrilu02_analysis, cusparseCcsrilu02_analysis, cusparseZcsrilu02_analysis,
-                          "cuSparse::Xcsrilu02_analysis()", rengine, num_rows, nnz, descM,
-                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(work_buffer));
+                          "cuSparse::Xcsrilu02_analysis()", rengine, num_rows, nnz, descM.get(),
+                          convert(ilu), convert(mpntr), convert(mindx), infoM.get(), rpolicy, convert(work_buffer));
 
         cuda_call_backend<value_type>(cusparseScsrilu02, cusparseDcsrilu02, cusparseCcsrilu02, cusparseZcsrilu02,
-                          "cuSparse::Xcsrilu02()", rengine, num_rows, nnz, descM,
-                          convert(ilu), convert(mpntr), convert(mindx), infoM, rpolicy, convert(work_buffer));
+                          "cuSparse::Xcsrilu02()", rengine, num_rows, nnz, descM.get(),
+                          convert(ilu), convert(mpntr), convert(mindx), infoM.get(), rpolicy, convert(work_buffer));
         #endif
 
         #ifdef HALA_ENABLE_ROCM
+        auto info = make_rocsparse_mat_info();
         auto mdesc = make_rocsparse_general_description('N');
 
         hala::vcopy(rengine, mvals, ilu);
@@ -86,20 +88,20 @@ template<typename T> struct gpu_ilu{
         rocm_call_backend<value_type>(rocsparse_scsrilu0_buffer_size, rocsparse_dcsrilu0_buffer_size,
                                       rocsparse_ccsrilu0_buffer_size, rocsparse_zcsrilu0_buffer_size,
                                       "csric0_buffer_size()",
-                                      rengine, num_rows, nnz, mdesc, convert(ilu), convert(mpntr), convert(mindx), info, &buffer_size);
+                                      rengine, num_rows, nnz, mdesc.get(), convert(ilu), convert(mpntr), convert(mindx), info.get(), &buffer_size);
 
         auto work_buffer = make_gpu_vector<int>(buffer_size / sizeof(int), rengine.device());
 
         rocm_call_backend<value_type>(rocsparse_scsrilu0_analysis, rocsparse_dcsrilu0_analysis,
                                       rocsparse_ccsrilu0_analysis, rocsparse_zcsrilu0_analysis,
                                       "csric0_analysis()",
-                                      rengine, num_rows, nnz, mdesc, convert(ilu), convert(mpntr), convert(mindx),
-                                      info, rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, convert(work_buffer));
+                                      rengine, num_rows, nnz, mdesc.get(), convert(ilu), convert(mpntr), convert(mindx),
+                                      info.get(), rocsparse_analysis_policy_reuse, rocsparse_solve_policy_auto, convert(work_buffer));
 
         rocm_call_backend<value_type>(rocsparse_scsrilu0, rocsparse_dcsrilu0, rocsparse_ccsrilu0, rocsparse_zcsrilu0,
                                       "csric0()",
-                                      rengine, num_rows, nnz, mdesc, convert(ilu), convert(mpntr), convert(mindx),
-                                      info, rocsparse_solve_policy_auto, convert(work_buffer));
+                                      rengine, num_rows, nnz, mdesc.get(), convert(ilu), convert(mpntr), convert(mindx),
+                                      info.get(), rocsparse_solve_policy_auto, convert(work_buffer));
         #endif
 
         upper = std::make_unique<gpu_triangular_matrix<value_type>>(rengine, 'U', 'N', mpntr, mindx, ilu, policy);
@@ -174,13 +176,6 @@ template<typename T> struct gpu_ilu{
 
 private:
     gpu_engine rengine;
-
-    #ifdef HALA_ENABLE_CUDA
-    cuda_struct_description<csrilu02Info_t> infoM;
-    #endif
-    #ifdef HALA_ENABLE_ROCM
-    rocm_struct_description<rocsparse_mat_info> info;
-    #endif
 
     gpu_vector<value_type> ilu;
 
