@@ -123,13 +123,13 @@ public:
             int buff_size = 0;
             cuda_call_backend<value_type>(
                 cusparseScsrsv2_bufferSize, cusparseDcsrsv2_bufferSize, cusparseCcsrsv2_bufferSize, cusparseZcsrsv2_bufferSize,
-                "cuSparse::Xcsrsv2_bufferSize()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, infosv[id], &buff_size);
+                "cuSparse::Xcsrsv2_bufferSize()", engine(), cuda_trans, nrows, nz, cdesc.get(), pconvert(rvals), rpntr, rindx, infosv[id], &buff_size);
 
             auto tmp_buffer = make_gpu_vector<int>(buff_size / sizeof(int), engine().device());
 
             cuda_call_backend<value_type>(
                 cusparseScsrsv2_analysis, cusparseDcsrsv2_analysis, cusparseCcsrsv2_analysis, cusparseZcsrsv2_analysis,
-                "cuSparse::Xcsrsv2_analysis()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, infosv[id], policy(), convert(tmp_buffer));
+                "cuSparse::Xcsrsv2_analysis()", engine(), cuda_trans, nrows, nz, cdesc.get(), pconvert(rvals), rpntr, rindx, infosv[id], policy(), convert(tmp_buffer));
         }
         return infosv[id];
     }
@@ -153,7 +153,7 @@ public:
             size_t buff_size = 0;
             cuda_call_backend<value_type>(
                 cusparseScsrsm2_bufferSizeExt, cusparseDcsrsm2_bufferSizeExt, cusparseCcsrsm2_bufferSizeExt, cusparseZcsrsm2_bufferSizeExt,
-                "cuSparse::Xcsrsm2_bufferSizeExt()", engine(), 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc,
+                "cuSparse::Xcsrsm2_bufferSizeExt()", engine(), 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc.get(),
                 pconvert(rvals), rpntr, rindx, convert(B), ldb, infosm[id], policy(), &buff_size);
 
             auto f77_buffer = make_gpu_vector<int>(buff_size / sizeof(int), engine().device());
@@ -161,7 +161,7 @@ public:
             cuda_call_backend<value_type>(
                 cusparseScsrsm2_analysis, cusparseDcsrsm2_analysis, cusparseCcsrsm2_analysis, cusparseZcsrsm2_analysis,
                 "cuSparse::Xcsrsm2_analysis()", engine(), 0, cuda_transa, cuda_transb, nrows, nrhs, nz,
-                palpha, cdesc, pconvert(rvals), rpntr, rindx, convert(B), ldb, infosm[id], policy(), convert(f77_buffer));
+                palpha, cdesc.get(), pconvert(rvals), rpntr, rindx, convert(B), ldb, infosm[id], policy(), convert(f77_buffer));
         }
         return infosm[id];
     }
@@ -178,13 +178,13 @@ public:
 
             cuda_call_backend<value_type>(
                 cusparseScsrsm_analysis, cusparseDcsrsm_analysis, cusparseCcsrsm_analysis, cusparseZcsrsm_analysis,
-                "cuSparse::Xcsrsm_analysis()", engine(), cuda_trans, nrows, nz, cdesc, pconvert(rvals), rpntr, rindx, info[id]);
+                "cuSparse::Xcsrsm_analysis()", engine(), cuda_trans, nrows, nz, cdesc.get(), pconvert(rvals), rpntr, rindx, info[id]);
         }
         return info[id];
     }
     #endif
     //! \brief Return the matrix description.
-    cusparseMatDescr_t description() const{ return cdesc; }
+    cusparseMatDescr_t description() const{ return cdesc.get(); }
 
     //! \brief Return the alias to the pntr data.
     int const* pntr() const{ return rpntr; }
@@ -210,7 +210,7 @@ public:
         int buff_size = 0;
         cuda_call_backend<value_type>(
                 cusparseScsrsv2_bufferSize, cusparseDcsrsv2_bufferSize, cusparseCcsrsv2_bufferSize, cusparseZcsrsv2_bufferSize,
-                "cusparseXcsrsv2_bufferSize", rengine, cuda_trans, nrows, nz, cdesc,
+                "cusparseXcsrsv2_bufferSize", rengine, cuda_trans, nrows, nz, cdesc.get(),
                 vals(), rpntr, rindx, analyze_sv(trans), pconvert(&buff_size));
         return static_cast<size_t>(buff_size);
     }
@@ -226,7 +226,7 @@ public:
 
         cuda_call_backend<value_type>(
                 cusparseScsrsv2_solve, cusparseDcsrsv2_solve, cusparseCcsrsv2_solve, cusparseZcsrsv2_solve,
-                "cusparseXcsrsv2_solve", rengine, cuda_trans, nrows, nz, palpha, cdesc,
+                "cusparseXcsrsv2_solve", rengine, cuda_trans, nrows, nz, palpha, cdesc.get(),
                 vals(), rpntr, rindx, analyze_sv(trans),
                 convert(b), cconvert(x), policy(), cconvert(temp));
     }
@@ -244,7 +244,7 @@ public:
         size_t buff_size = 0;
         cuda_call_backend<value_type>(
                 cusparseScsrsm2_bufferSizeExt, cusparseDcsrsm2_bufferSizeExt, cusparseCcsrsm2_bufferSizeExt, cusparseZcsrsm2_bufferSizeExt,
-                "cusparseXcsrsm2_bufferSizeExt", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc,
+                "cusparseXcsrsm2_bufferSizeExt", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc.get(),
                 vals(), rpntr, rindx, convert(B), ldb,
                 analyze_sm(transa, transb, nrhs, alpha, B, ldb), policy(), pconvert(&buff_size));
         return buff_size;
@@ -264,7 +264,7 @@ public:
 
         cuda_call_backend<value_type>(
                 cusparseScsrsm2_solve, cusparseDcsrsm2_solve, cusparseCcsrsm2_solve, cusparseZcsrsm2_solve,
-                "cusparseXcsrsm2_solve", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc,
+                "cusparseXcsrsm2_solve", rengine, 0, cuda_transa, cuda_transb, nrows, nrhs, nz, palpha, cdesc.get(),
                 vals(), rpntr, rindx, convert(B), ldb,
                 analyze_sm(transa, transb, nrhs, alpha, B, ldb), policy(), cconvert(temp));
     }
@@ -283,7 +283,7 @@ public:
         auto palpha = get_pointer<value_type>(alpha);
 
         cuda_call_backend<value_type>(cusparseScsrsv_solve, cusparseDcsrsv_solve, cusparseCcsrsv_solve, cusparseZcsrsv_solve,
-                      "cusparseXcsrsv_solve", rengine, cuda_trans, nrows, palpha, cdesc,
+                      "cusparseXcsrsv_solve", rengine, cuda_trans, nrows, palpha, cdesc.get(),
                       vals(), rpntr, rindx, analyze_sv(trans), convert(b), cconvert(x));
     }
     //! \brief Returns the size required for the temporary buffers.
@@ -307,7 +307,7 @@ public:
         if (is_n(transb)){
 
             cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc,
+                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc.get(),
                             vals(), rpntr, rindx, analyze_sv(transa), convert(B), ldb, cconvert(C), nrows);
 
             if (ldb == nrows){
@@ -326,7 +326,7 @@ public:
             }
 
             cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc,
+                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc.get(),
                             vals(), rpntr, rindx, analyze_sv(transa), convert(X), nrows, cconvert(C), nrows);
 
             { // C holds the answer, write back to B in transposed order
@@ -356,7 +356,7 @@ private:
     T const *rvals;
 
     int nrows, nz;
-    cuda_struct_description<cusparseMatDescr_t> cdesc;
+    std::unique_ptr<typename std::remove_pointer<cusparseMatDescr_t>::type, cuda_deleter> cdesc;
     char rpolicy;
 
     #if (__HALA_CUDA_API_VERSION__ >= 10000)

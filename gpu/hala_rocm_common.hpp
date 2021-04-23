@@ -249,6 +249,40 @@ void gpu_free(T *gpu_data){
 
 /*!
  * \ingroup HALAROCMCOMMON
+ * \brief Deleter for the ROCm handles.
+ */
+struct rocm_deleter{
+    //! \brief Initialize the deleter with the ownership.
+    rocm_deleter(ptr_ownership const set_ownership) : ownership(set_ownership){}
+    //! \brief Deleter rocBlas handle.
+    void delete_handle(rocblas_handle h){ check_rocm( rocblas_destroy_handle(h), "rocblas_destroy_handle()" ); }
+    //! \brief Deleter rocSparse handle.
+    void delete_handle(rocsparse_handle h){ check_rocm( rocsparse_destroy_handle(h), "rocsparse_destroy_handle()" ); }
+    //! \brief Deleter rocsparse_mat_descr handle.
+    void delete_handle(rocsparse_mat_descr h){ check_rocm( rocsparse_destroy_mat_descr(h), "rocsparse_destroy_mat_descr()" ); }
+    //! \brief Deleter rocsparse_mat_info handle.
+    void delete_handle(rocsparse_mat_info h){ check_rocm( rocsparse_destroy_mat_info(h), "rocsparse_destroy_mat_info()" ); }
+    //! \brief Delete a pointer, but only if owned.
+    template<typename T>
+    void operator() (T* p){
+        if (ownership == ptr_ownership::own){ delete_handle(p); }
+    }
+private:
+    //! \brief Remember the ownership of the handle.
+    ptr_ownership ownership;
+};
+
+/*!
+ * \ingroup HALAROCMCOMMON
+ * \brief Wraps a pointer handle into a std::unique_ptr variable with the hala::rocm_deleter in own mode.
+ */
+template<typename handle>
+inline auto rocm_unique_ptr(handle h){
+    return std::unique_ptr<typename std::remove_pointer<handle>::type, rocm_deleter>(h, rocm_deleter(ptr_ownership::own));
+}
+
+/*!
+ * \ingroup HALAROCMCOMMON
  * \brief Identical to std::copy_n() but works on cpu-gpu or gpu-gpu pair of arrays.
  */
 template<copy_direction dir, typename T>
