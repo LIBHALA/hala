@@ -85,6 +85,9 @@ public:
     //! \brief Copy with non-owning references.
     gpu_engine(gpu_engine const &other) : gpu_engine(other.cgpu, other, other, other){}
 
+    //! \brief Synchronizes with the device.
+    void synchronize() const{ cudaDeviceSynchronize(); }
+
     //! \brief Set cuda stream for this engine.
     void set_stream(cudaStream_t streamid) const{
         check_cuda( cublasSetStream(hcublas.get(), streamid), "cublasSetStream()" );
