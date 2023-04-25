@@ -2,6 +2,7 @@
 
 * added a full example for the VEX module
 * fixed some conflicts when using regtype::none and float or double arithmetic
+* adjusted scaling on some tests to account for order of operations when using avx512
 
 ### Version: 1.0
 
