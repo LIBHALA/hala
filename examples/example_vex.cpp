@@ -280,6 +280,15 @@ int main(int, char**){
          << setw(20) << duration_avx << "\n";
     #endif
 
+    #ifdef __AVX512F__
+    // the __AVX512F__ macro is enabled by the -mavx512f flag and enables the 512-bit registers
+    meter.set_start();
+    double result_avx512 = integrate_sir_vex<hala::regtype::avx512>(beta, gamma);
+    long long duration_avx512 = meter.get_end();
+    cout << setw(10) << "512-bit:" << setw(20) << result_avx512
+         << setw(20) << duration_avx512 << "\n";
+    #endif
+
     return 0;
 //! [Example_03 main]
 }

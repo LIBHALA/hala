@@ -117,7 +117,7 @@ template<typename T, hala::regtype reg> void test_extended_registers(){
     for(size_t i=0; i<N; i++) y_ref2[i] = mabs2(y_ref2[i]);
     for(size_t i=0; i<N; i++) y_ref[i] = mabs(y_ref[i]);
 
-    hassert(testvec(x, y_ref));
+    hassert(testvec(x, y_ref, nrm * nrm));
     hassert(testvec(y, y_ref2, nrm * nrm));
 
     // test real and imag
