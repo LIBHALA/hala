@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 
-project(HALA VERSION 1.0.0 LANGUAGES CXX)
+project(HALA VERSION 1.1.0 LANGUAGES CXX)
 set(hala_license "BSD 3-Clause")
 
 # load all the _hala_* macros
@@ -145,12 +145,10 @@ endif()
 
 ############ CUDA ############
 if (HALA_GPU_BACKEND STREQUAL "CUDA")
-    find_package(CUDA REQUIRED)
+    find_package(CUDAToolkit REQUIRED)
 
-    list(FILTER CUDA_CUBLAS_LIBRARIES EXCLUDE REGEX "-NOTFOUND$") # CMake 3.10 and CUDA 10 hack
-
-    target_link_libraries(HALA INTERFACE ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_LIBRARIES})
-    target_include_directories(HALA INTERFACE ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(HALA INTERFACE CUDA::cublas CUDA::cusparse CUDA::cusolver CUDA::cudart)
+    target_include_directories(HALA INTERFACE ${CUDAToolkit_INCLUDE_DIRS})
 
     set(HALA_ENABLE_CUDA ON)
     list(APPEND _hala_components "CUDA")
@@ -252,7 +250,7 @@ set(_hala_cmake_opts "CMAKE_INSTALL_PREFIX;CMAKE_BUILD_TYPE;CMAKE_CXX_FLAGS_${_h
 list(APPEND _hala_cmake_opts "BLAS_LIBRARIES;LAPACK_LIBRARIES")
 
 if (HALA_ENABLE_CUDA)
-    list(APPEND _hala_cmake_opts "CUDA_TOOLKIT_ROOT_DIR;CUDA_INCLUDE_DIRS;CUDA_CUBLAS_LIBRARIES;CUDA_cusparse_LIBRARY;CUDA_LIBRARIES")
+    list(APPEND _hala_cmake_opts "CUDAToolkit_ROOT;CUDAToolkit_VERSION;CUDAToolkit_INCLUDE_DIRS")
 endif()
 
 if (HALA_ENABLE_CHOLMOD)

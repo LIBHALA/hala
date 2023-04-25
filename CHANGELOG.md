@@ -1,5 +1,7 @@
 ### Version: development
 
+* CMake now requires version 3.19
+    * updated the way the CUDA libraries are found
 * added a full example for the VEX module
 * fixed some conflicts when using regtype::none and float or double arithmetic
 * adjusted scaling on some tests to account for order of operations when using avx512
