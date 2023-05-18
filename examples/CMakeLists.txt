@@ -5,6 +5,9 @@ target_link_libraries(example_gauss_seidel HALA::HALA)
 add_executable(example_gpu example_gpu.cpp)
 target_link_libraries(example_gpu HALA::HALA)
 
+add_executable(example_bench_mygpu example_bench_mygpu.cpp)
+target_link_libraries(example_bench_mygpu HALA::HALA)
+
 add_executable(example_vex example_vex.cpp)
 target_link_libraries(example_vex HALA::HALA)
 
