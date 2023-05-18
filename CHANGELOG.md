@@ -1,5 +1,6 @@
 ### Version: development
 
+* dropped support for CUDA 9
 * changed the name of the main development branch to `develop`
 * CMake now requires version 3.19
     * updated the way the CUDA libraries are found

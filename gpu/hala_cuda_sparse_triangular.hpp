@@ -51,11 +51,7 @@ public:
         : rengine(cengine), rpntr(get_data(pn)), rindx(get_data(in)), rvals(get_standard_data(va)),
         nrows(get_size_int(pn) - 1), nz(get_size_int(in)), cdesc(make_cuda_mat_description('G', uplo, diag)),
         rpolicy(lpolicy),
-        #if (__HALA_CUDA_API_VERSION__ >= 10000)
         infosv{nullptr, nullptr}, infosm{nullptr, nullptr, nullptr, nullptr}
-        #else
-        info{nullptr, nullptr}
-        #endif
     {
         assert( get_size(in) == get_size(va) );
 
@@ -77,18 +73,13 @@ public:
         rengine(other.rengine), rpntr(other.rpntr), rindx(other.rindx), rvals(other.rvals),
         nrows(other.nrows), nz(other.nz), cdesc(std::move(other.cdesc)),
         rpolicy(other.rpolicy),
-        #if (__HALA_CUDA_API_VERSION__ >= 10000)
         infosv{std::exchange(other.infosv[0], nullptr), std::exchange(other.infosv[1], nullptr)},
         infosm{std::exchange(other.infosm[0], nullptr), std::exchange(other.infosm[1], nullptr),
                std::exchange(other.infosm[2], nullptr), std::exchange(other.infosm[3], nullptr)}
-        #else
-        info{std::exchange(other.info[0], nullptr), std::exchange(other.info[1], nullptr)}
-        #endif
         {}
 
     //! \brief Free the CUDA analysis, but not the aliased matrix values and indexes.
     ~gpu_triangular_matrix(){
-        #if (__HALA_CUDA_API_VERSION__ >= 10000)
         for(size_t id=0; id<2; id++){
             if (infosv[id] != nullptr)
                 check_cuda(cusparseDestroyCsrsv2Info(infosv[id]), "cuSparse::DestroyCsrsv2Info()");
@@ -97,15 +88,8 @@ public:
             if (infosm[id] != nullptr)
                 check_cuda(cusparseDestroyCsrsm2Info(infosm[id]), "cuSparse::DestroyCsrsm2Info()");
         }
-        #else
-        for(size_t id=0; id<2; id++){
-            if (info[id] != nullptr)
-                check_cuda(cusparseDestroySolveAnalysisInfo(info[id]), "cuSparse::DestroySolveAnalysisInfo()");
-        }
-        #endif
     }
 
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     //! \brief Return the solver policy selected during construction.
     cusparseSolvePolicy_t policy() const{
         return ((rpolicy == 'L') || (rpolicy == 'l')) ?  CUSPARSE_SOLVE_POLICY_USE_LEVEL : CUSPARSE_SOLVE_POLICY_NO_LEVEL;
@@ -165,24 +149,7 @@ public:
         }
         return infosm[id];
     }
-    #else
-    //! \brief Perform analysis for vector or matrix solve, or use the cached analysis.
-    cusparseSolveAnalysisInfo_t analyze_sv(char trans) const{
-        assert( check_trans( trans ) );
 
-        auto cuda_trans = trans_to_cuda_sparse<T>(trans);
-
-        size_t const id = (is_n(trans)) ? 0 : 1;
-        if (info[id] == nullptr){
-            check_cuda( cusparseCreateSolveAnalysisInfo(&info[id]), "cuSparse::CreateSolveAnalysisInfo()" );
-
-            cuda_call_backend<value_type>(
-                cusparseScsrsm_analysis, cusparseDcsrsm_analysis, cusparseCcsrsm_analysis, cusparseZcsrsm_analysis,
-                "cuSparse::Xcsrsm_analysis()", engine(), cuda_trans, nrows, nz, cdesc.get(), pconvert(rvals), rpntr, rindx, info[id]);
-        }
-        return info[id];
-    }
-    #endif
     //! \brief Return the matrix description.
     cusparseMatDescr_t description() const{ return cdesc.get(); }
 
@@ -201,7 +168,6 @@ public:
     //! \brief Return the number of non-zeros.
     int nnz() const{ return nz; }
 
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     //! \brief Returns the size required for the temporary buffers.
     template<typename FPA, class VectorLikeB, class VectorLikeX>
     size_t trsv_buffer_size(char trans, FPA, VectorLikeB const&, VectorLikeX &) const{
@@ -268,75 +234,7 @@ public:
                 vals(), rpntr, rindx, convert(B), ldb,
                 analyze_sm(transa, transb, nrhs, alpha, B, ldb), policy(), cconvert(temp));
     }
-    #else
-    //! \brief Returns the size required for the temporary buffers.
-    template<typename FPA, class VectorLikeB, class VectorLikeX>
-    size_t trsv_buffer_size(char, FPA, VectorLikeB const&, VectorLikeX&&) const{ return 0; }
-    //! \brief Matrix vector product with a user-provided buffer.
-    template<typename FPA, class VectorLikeB, class VectorLikeX, class VectorLikeT>
-    void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &&x, VectorLikeT&&) const{
-        check_types(rvals, b, x);
-        assert( valid::sparse_trsv(trans, *this, b) );
-        check_set_size(assume_output, x, nrows);
 
-        auto cuda_trans = trans_to_cuda_sparse<value_type>(trans);
-        auto palpha = get_pointer<value_type>(alpha);
-
-        cuda_call_backend<value_type>(cusparseScsrsv_solve, cusparseDcsrsv_solve, cusparseCcsrsv_solve, cusparseZcsrsv_solve,
-                      "cusparseXcsrsv_solve", rengine, cuda_trans, nrows, palpha, cdesc.get(),
-                      vals(), rpntr, rindx, analyze_sv(trans), convert(b), cconvert(x));
-    }
-    //! \brief Returns the size required for the temporary buffers.
-    template<typename FPA, class VectorLikeB>
-    size_t trsm_buffer_size(char, char, int, FPA, VectorLikeB &&, int = -1) const{ return 0; }
-    //! \brief Matrix matrix product with a user-provided buffer.
-    template<typename FPA, class VectorLikeB, class VectorLikeT>
-    void trsm(char transa, char transb, int nrhs, FPA alpha, VectorLikeB &&B, int ldb, VectorLikeT &&) const{
-        check_types(rvals, B);
-        valid::default_ld(is_n(transb), nrows, nrhs, ldb);
-        assert( valid::sparse_trsm(transa, transb, nrhs, *this, B, ldb) );
-
-        auto palpha = get_pointer<value_type>(alpha);
-
-        auto cuda_transa = trans_to_cuda_sparse<value_type>(transa);
-        if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
-
-        auto C = new_vector(rengine, B);
-        force_size(hala_size(nrows, nrhs), C);
-
-        if (is_n(transb)){
-
-            cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc.get(),
-                            vals(), rpntr, rindx, analyze_sv(transa), convert(B), ldb, cconvert(C), nrows);
-
-            if (ldb == nrows){
-                vcopy(rengine, C, B); // copy back
-            }else{ // copy only the block
-                gpu_pntr<host_pntr> hold(rengine); // in case device pointers were used in the call above
-                geam(rengine, 'N', 'N', nrows, nrhs, 1, C, nrows, 0, C, nrows, B, ldb);
-            }
-        }else{
-
-            auto X = new_vector(rengine, B); // set X = B^T
-            force_size(hala_size(nrows, nrhs), X);
-            {
-                gpu_pntr<host_pntr> hold(rengine);
-                geam(rengine, 'T', 'T', nrows, nrhs, 1, B, ldb, 0, B, ldb, X, nrows);
-            }
-
-            cuda_call_backend<value_type>(cusparseScsrsm_solve, cusparseDcsrsm_solve, cusparseCcsrsm_solve, cusparseZcsrsm_solve,
-                            "cusparseXcsrsm_solve", rengine, cuda_transa, nrows, nrhs, palpha, cdesc.get(),
-                            vals(), rpntr, rindx, analyze_sv(transa), convert(X), nrows, cconvert(C), nrows);
-
-            { // C holds the answer, write back to B in transposed order
-                gpu_pntr<host_pntr> hold(rengine);
-                geam(rengine, 'T', 'T', nrhs, nrows, 1, C, nrows, 0, C, nrows, B, ldb);
-            }
-
-        }
-    }
-    #endif
     //! \brief Matrix vector product.
     template<typename FPA, class VectorLikeB, class VectorLikeX>
     void trsv(char trans, FPA alpha, VectorLikeB const &b, VectorLikeX &x) const{
@@ -359,14 +257,10 @@ private:
     std::unique_ptr<typename std::remove_pointer<cusparseMatDescr_t>::type, cuda_deleter> cdesc;
     char rpolicy;
 
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     // the new API has different analysis structs for vector and matrix solvers as well as combinations of trans operations
     csrsv2Info_t mutable infosv[2]; // non-transpose and transpose cases
     csrsm2Info_t mutable infosm[4]; // 4 way transpose non-transpose combinations between A and B
-    #else
-    // the old API as only one analysis info
-    cusparseSolveAnalysisInfo_t mutable info[2]; // non-transpose and transpose cases
-    #endif
+
 };
 
 /*!

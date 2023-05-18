@@ -61,9 +61,6 @@ public:
         hcublas(make_cublas_handle(cgpu), cuda_deleter(ptr_ownership::own)),
         hcusparse(make_cusparse_handle(cgpu), cuda_deleter(ptr_ownership::own)),
         hcusolverdn(make_cusolverdn_handle(cgpu), cuda_deleter(ptr_ownership::own))
-        #if (__HALA_CUDA_API_VERSION__ < 10020)
-        , mat_gen(make_general_matrix(cgpu))
-        #endif
     {
         assert((cgpu >= 0) && (cgpu < gpu_device_count()));
     }
@@ -73,9 +70,6 @@ public:
         hcublas(extern_cublas, cuda_deleter(ptr_ownership::not_own)),
         hcusparse(extern_cusparse, cuda_deleter(ptr_ownership::not_own)),
         hcusolverdn(extern_cusolver, cuda_deleter(ptr_ownership::not_own))
-        #if (__HALA_CUDA_API_VERSION__ < 10020)
-        , mat_gen(make_general_matrix(cgpu))
-        #endif
     {
         assert((cgpu >= 0) && (cgpu < gpu_device_count()));
     }
@@ -166,31 +160,6 @@ public:
         check_cuda( cusolverDnCreate(&tcusolverdn), "cusolverDnCreate()" );
         return tcusolverdn;
     }
-
-    #if (__HALA_CUDA_API_VERSION__ < 10020)
-    /*!
-     * \internal
-     * \brief Generic matrix descriptor to avoid repeated create/destroys.
-     *
-     * \endinternal
-     */
-    std::unique_ptr<typename std::remove_pointer<cusparseMatDescr_t>::type, cuda_deleter> mat_gen;
-
-    //! \brief Return a general matrix description.
-    cusparseMatDescr_t general_matrix() const{ return mat_gen.get(); }
-
-    //! \brief Creates a generic cuSparse mat description.
-    static std::unique_ptr<typename std::remove_pointer<cusparseMatDescr_t>::type, cuda_deleter> make_general_matrix(int gpu_device){
-        cudaSetDevice(gpu_device);
-        cusparseMatDescr_t tmat_gen;
-        check_cuda( cusparseCreateMatDescr(&tmat_gen), "creating generic sparse matrix description");
-        cusparseSetMatType(tmat_gen, CUSPARSE_MATRIX_TYPE_GENERAL);
-        cusparseSetMatIndexBase(tmat_gen, CUSPARSE_INDEX_BASE_ZERO);
-        cusparseSetMatDiagType(tmat_gen, CUSPARSE_DIAG_TYPE_NON_UNIT);
-        return cuda_unique_ptr(tmat_gen);
-    }
-    #endif
-
     #endif
 
     #ifdef HALA_ENABLE_ROCM

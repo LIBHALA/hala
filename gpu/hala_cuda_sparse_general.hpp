@@ -25,7 +25,6 @@
 
 namespace hala{
 
-#if (__HALA_CUDA_API_VERSION__ >= 10000)
 template<typename T>
 cudaDataType_t get_cuda_dtype(){
     if __HALA_CONSTEXPR_IF__ (is_float<T>::value){
@@ -42,7 +41,6 @@ cudaDataType_t get_cuda_dtype(){
 #define HALA_CUSPARSE_SPMV_ALG_DEFAULT CUSPARSE_SPMV_ALG_DEFAULT
 #else
 #define HALA_CUSPARSE_SPMV_ALG_DEFAULT CUSPARSE_MV_ALG_DEFAULT
-#endif
 #endif
 
 /*!
@@ -67,7 +65,6 @@ inline auto make_cuda_mat_description(char type, char uplo, char diag){
     return cuda_unique_ptr(result);
 }
 
-#if (__HALA_CUDA_API_VERSION__ >= 10000)
 /*!
  * \ingroup HALACUDACOMMON
  * \brief Create sparse matrix description, using 32bit and zero based indexing, and row-compressed format.
@@ -132,8 +129,6 @@ inline auto make_cuda_dmat_description(VectorLike const &A, int rows, int cols, 
     return cuda_unique_ptr(result);
 }
 
-#endif
-
 /*!
  * \ingroup HALACUDACOMMON
  * \brief Create wrapped csrilu02Info_t for ILU preconditioning.
@@ -172,10 +167,9 @@ public:
     gpu_sparse_matrix(gpu_engine const &engine, int num_rows, int num_cols, int num_nz,
                       VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals)
     : rengine(engine), rpntr(get_data(pntr)), rindx(get_data(indx)), rvals(get_standard_data(vals)),
-    rows(num_rows), cols(num_cols), nnz(num_nz)
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
-    , desc(make_cuda_mat_description(rows, cols, nnz, pntr, indx, vals)), size_buffer_n(0), size_buffer_t(0), size_buffer_c(0)
-    #endif
+    rows(num_rows), cols(num_cols), nnz(num_nz),
+    desc(make_cuda_mat_description(rows, cols, nnz, pntr, indx, vals)),
+    size_buffer_n(0), size_buffer_t(0), size_buffer_c(0)
     {
         check_types(vals);
         check_types_int(pntr, indx);
@@ -189,10 +183,9 @@ public:
     gpu_sparse_matrix(gpu_engine const &engine, int num_cols,
                       VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals)
     : rengine(engine), rpntr(get_data(pntr)), rindx(get_data(indx)), rvals(get_standard_data(vals)),
-    rows(get_size_int(pntr) - 1), cols(num_cols), nnz(get_size(indx))
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
-    , desc(make_cuda_mat_description(rows, cols, nnz, pntr, indx, vals)), size_buffer_n(0), size_buffer_t(0), size_buffer_c(0)
-    #endif
+    rows(get_size_int(pntr) - 1), cols(num_cols), nnz(get_size(indx)),
+    desc(make_cuda_mat_description(rows, cols, nnz, pntr, indx, vals)),
+    size_buffer_n(0), size_buffer_t(0), size_buffer_c(0)
     {
         check_types(vals);
         check_types_int(pntr, indx);
@@ -215,7 +208,6 @@ public:
     //! \brief Returns the associated GPU engine.
     gpu_engine const& engine() const{ return rengine; }
 
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     //! \brief Returns the size of the workspace (in bytes) on the GPU device required for a gemv() operation.
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
     size_t gemv_buffer_size(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y) const{
@@ -264,12 +256,6 @@ public:
         int N = (is_n(transb)) ? b_cols : b_rows;
         pntr_check_set_size(beta, C, ldc, N);
 
-        #if (__HALA_CUDA_API_VERSION__ < 10020)
-        int K = (is_n(transa)) ? cols : rows;
-        if (is_n(transa))
-            return (is_c(transb)) ? hala_size(K, N) * sizeof(value_type) : 0;
-        #endif
-
         auto bdesc = make_cuda_dmat_description(B, b_rows, b_cols, ldb);
         auto cdesc = make_cuda_dmat_description(C, M, N, ldc);
         auto palpha = get_pointer<value_type>(alpha);
@@ -296,130 +282,21 @@ public:
         cusparseOperation_t cuda_transa = trans_to_cuda_sparse<value_type>(transa);
         cusparseOperation_t cuda_transb = trans_to_cuda_sparse<value_type>(transb);
 
-        #if (__HALA_CUDA_API_VERSION__ < 10020)
-        // prior to 10020 cuSparse has a bug when A is used in non-transpose mode, switch to the old API
-        if (is_n(transa)){
-            if (is_c(transb)){ // conjugate transpose not supported for cusparseScsrmm2
-                {
-                    gpu_pntr<host_pntr> hold(rengine);
-                    geam(rengine, 'C', 'C', K, N, 1, B, ldb, 0, B, ldb, temp, K);
-                }
-                cuda_transb = trans_to_cuda_sparse<value_type>('N');
-                cuda_call_backend<value_type>(cusparseScsrmm2, cusparseDcsrmm2, cusparseCcsrmm2, cusparseZcsrmm2,
-                                "cusparseXcsrmm2 (B-conj-transpose)", rengine, cuda_transa, cuda_transb, M, N, K, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(temp), K, pbeta, cconvert(C), ldc);
+        auto bdesc = make_cuda_dmat_description(B, b_rows, b_cols, ldb);
+        auto cdesc = make_cuda_dmat_description(C, M, N, ldc);
 
-            }else{
-                cuda_call_backend<value_type>(cusparseScsrmm2, cusparseDcsrmm2, cusparseCcsrmm2, cusparseZcsrmm2,
-                                "cusparseXcsrmm2", rengine, cuda_transa, cuda_transb, M, N, K, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(B), ldb, pbeta, cconvert(C), ldc);
-            }
-        }else{
+        cudaDataType_t cuda_type = get_cuda_dtype<value_type>();
+
+        #if (__HALA_CUDA_API_VERSION__ < 11000)
+        constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_MM_ALG_DEFAULT;
+        #else
+        constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_SPMM_ALG_DEFAULT;
         #endif
-            auto bdesc = make_cuda_dmat_description(B, b_rows, b_cols, ldb);
-            auto cdesc = make_cuda_dmat_description(C, M, N, ldc);
 
-            cudaDataType_t cuda_type = get_cuda_dtype<value_type>();
-
-            #if (__HALA_CUDA_API_VERSION__ < 11000)
-            constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_MM_ALG_DEFAULT;
-            #else
-            constexpr cusparseSpMMAlg_t spmm_alg = CUSPARSE_SPMM_ALG_DEFAULT;
-            #endif
-
-            check_cuda( cusparseSpMM(rengine, cuda_transa, cuda_transb, palpha, desc.get(), bdesc.get(), pbeta, cdesc.get(),
-                                     cuda_type, spmm_alg, convert(temp)),
-                        "cusparseSpMM()");
-
-        #if (__HALA_CUDA_API_VERSION__ < 10020)
-        } // closes the pre 10020 api work-around
-        #endif
+        check_cuda( cusparseSpMM(rengine, cuda_transa, cuda_transb, palpha, desc.get(), bdesc.get(), pbeta, cdesc.get(),
+                                 cuda_type, spmm_alg, convert(temp)),
+                    "cusparseSpMM()");
     }
-    #else
-    template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
-    size_t gemv_buffer_size(char, FPa, VectorLikeX const&, FPb, VectorLikeY&) const{ return 0; }
-    template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
-    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &y) const{
-        check_types(rvals, x, y);
-        rengine.check_gpu(x, y);
-        pntr_check_set_size(beta, y, (is_n(trans)) ? rows : cols, 1);
-
-        auto cuda_trans = trans_to_cuda_sparse<value_type>(trans);
-        auto palpha = get_pointer<value_type>(alpha);
-        auto pbeta  = get_pointer<value_type>(beta);
-
-        cuda_call_backend<value_type>(cusparseScsrmv, cusparseDcsrmv, cusparseCcsrmv, cusparseZcsrmv,
-                      "cuSparse::Xcsrmv()", rengine, cuda_trans, rows, cols, nnz, palpha, rengine.general_matrix(),
-                      pconvert(rvals), rpntr, rindx, convert(x), pbeta, convert(y));
-    }
-    template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY, class VectorLikeBuff>
-    void gemv(char trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &&y, VectorLikeBuff &&) const{
-        gemv(trans, alpha, x, beta, y);
-    }
-    template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char transa, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC &, int) const{
-        int N = (is_n(transb)) ? b_cols : b_rows;
-        int K = (is_n(transa)) ? cols : rows;
-        if (is_n(transa))
-            return (is_c(transb)) ? hala_size(N, K) * sizeof(value_type) : 0;
-        else
-            return (is_n(transb)) ? 0 : hala_size(N, K) * sizeof(value_type);
-    }
-    template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp) const{
-        check_types(rvals, B, C);
-        rengine.check_gpu(B, C);
-        int M = (is_n(transa)) ? rows : cols;
-        int N = (is_n(transb)) ? b_cols : b_rows;
-        int K = (is_n(transa)) ? cols : rows;
-        pntr_check_set_size(beta, C, ldc, N );
-        assert( valid::sparse_gemm(transa, transb, M, N, K, nnz, rpntr, rindx, rvals, B, ldb, C, ldc) );
-
-        auto palpha = get_pointer<value_type>(alpha);
-        auto pbeta  = get_pointer<value_type>(beta);
-
-        cusparseOperation_t cuda_transa = trans_to_cuda_sparse<value_type>(transa);
-        cusparseOperation_t cuda_transb = trans_to_cuda_sparse<value_type>(transb);
-
-        if (is_n(transa)){
-            if (is_c(transb)){ // conjugate transpose not supported for cusparseScsrmm2
-                {
-                    gpu_pntr<host_pntr> hold(rengine);
-                    geam(rengine, 'C', 'C', K, N, 1, B, ldb, 0, B, ldb, temp, K);
-                }
-                cuda_transb = trans_to_cuda_sparse<value_type>('N');
-                cuda_call_backend<value_type>(cusparseScsrmm2, cusparseDcsrmm2, cusparseCcsrmm2, cusparseZcsrmm2,
-                                "cuSparse::Xcsrmm2() (B-conj-transpose)", rengine, cuda_transa, cuda_transb, M, N, K, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(temp), K, pbeta, cconvert(C), ldc);
-
-            }else{
-                cuda_call_backend<value_type>(cusparseScsrmm2, cusparseDcsrmm2, cusparseCcsrmm2, cusparseZcsrmm2,
-                                "cuSparse::Xcsrmm2()", rengine, cuda_transa, cuda_transb, M, N, K, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(B), ldb, pbeta, cconvert(C), ldc);
-            }
-        }else{
-            if (is_n(transb)){
-                cuda_call_backend<value_type>(cusparseScsrmm, cusparseDcsrmm, cusparseCcsrmm, cusparseZcsrmm,
-                                "cuSparse::Xcsrmm() (B-non-transpose)", rengine, cuda_transa, K, N, M, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(B), ldb, pbeta, cconvert(C), ldc);
-            }else{ // manual transpose needed
-                {
-                    gpu_pntr<host_pntr> hold(rengine);
-                    geam(rengine, transb, transb, K, N, 1, B, ldb, 0, B, ldb, temp, K);
-                }
-                cuda_call_backend<value_type>(cusparseScsrmm, cusparseDcsrmm, cusparseCcsrmm, cusparseZcsrmm,
-                                "cuSparse::Xcsrmm() (B-transposed)", rengine, cuda_transa, K, N, M, nnz,
-                                palpha, rengine.general_matrix(), pconvert(rvals), rpntr, rindx,
-                                convert(temp), K, pbeta, cconvert(C), ldc);
-            }
-        }
-    }
-    #endif
     //! \brief Performs matrix-matrix product, see hala::sparse_gemv().
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
     void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc) const{
@@ -428,7 +305,6 @@ public:
     }
 
 protected:
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     //! \brief Helper wrapper around cusparseSpMV_bufferSize().
     template<typename FPa, class VectorLikeX, typename FPb, class VectorLikeY>
     void get_gemv_buffer(cusparseOperation_t trans, FPa alpha, VectorLikeX const &x, FPb beta, VectorLikeY &y, size_t *size) const{
@@ -455,17 +331,14 @@ protected:
                     "cusparseSpMM_bufferSize()");
         return bsize;
     }
-    #endif
 
 private:
     gpu_engine rengine;
     int const *rpntr, *rindx;
     T const* rvals;
     int rows, cols, nnz;
-    #if (__HALA_CUDA_API_VERSION__ >= 10000)
     std::unique_ptr<typename std::remove_pointer<cusparseSpMatDescr_t>::type, cuda_deleter> desc;
     mutable size_t size_buffer_n, size_buffer_t, size_buffer_c;
-    #endif
 };
 
 /*!
