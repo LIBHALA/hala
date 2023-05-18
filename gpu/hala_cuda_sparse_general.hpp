@@ -91,6 +91,39 @@ inline auto make_cuda_mat_description(int rows, int cols, int nnz,
 
 /*!
  * \ingroup HALACUDACOMMON
+ * \brief Create triangular sparse matrix description, using 32bit and zero based indexing, and row-compressed format.
+ */
+template<class VectorLikeP, class VectorLikeI, class VectorLikeV>
+inline auto make_cuda_mat_description(int rows, int cols, int nnz,
+                                      VectorLikeP const &pntr, VectorLikeI const &indx, VectorLikeV const &vals,
+                                      char uplo, char diag){
+
+    using scalar_type = get_scalar_type<VectorLikeV>;
+
+    cudaDataType_t cuda_type = get_cuda_dtype<scalar_type>();
+
+    void *upntr = const_cast<void*>(reinterpret_cast<void const*>(get_data(pntr)));
+    void *uindx = const_cast<void*>(reinterpret_cast<void const*>(get_data(indx)));
+    void *uvals = const_cast<void*>(reinterpret_cast<void const*>(get_data(vals)));
+
+    cusparseSpMatDescr_t result;
+    check_cuda(cusparseCreateCsr(&result, (int64_t) rows, (int64_t) cols, (int64_t) nnz, upntr, uindx, uvals,
+                                 CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, cuda_type),
+               "cuSparse::CreateCsr()");
+
+    cusparseFillMode_t fillmode = (is_l(uplo)) ? CUSPARSE_FILL_MODE_LOWER : CUSPARSE_FILL_MODE_UPPER;
+    check_cuda(cusparseSpMatSetAttribute(result, CUSPARSE_SPMAT_FILL_MODE, &fillmode, sizeof(fillmode)),
+               "cuSparse::cusparseSpMatSetAttribute()");
+
+    cusparseDiagType_t diagmode = (is_n(diag)) ? CUSPARSE_DIAG_TYPE_NON_UNIT : CUSPARSE_DIAG_TYPE_UNIT;
+    check_cuda(cusparseSpMatSetAttribute(result, CUSPARSE_SPMAT_DIAG_TYPE, &diagmode, sizeof(diagmode)),
+               "cuSparse::cusparseSpMatSetAttribute()");
+
+    return cuda_unique_ptr(result);
+}
+
+/*!
+ * \ingroup HALACUDACOMMON
  * \brief Create dense vector description using the \b effective_size to avoid the max-int when working with pointers.
  */
 template<class VectorLike>

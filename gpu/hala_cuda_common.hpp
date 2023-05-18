@@ -284,8 +284,10 @@ struct cuda_deleter{
     void delete_handle(cusparseMatDescr_t h){ check_cuda( cusparseDestroyMatDescr(h), "cusparseDestroyMatDescr()" ); }
     //! \brief Deleter csrilu02Info_t handle.
     void delete_handle(csrilu02Info_t h){ check_cuda( cusparseDestroyCsrilu02Info(h), "cusparseDestroyCsrilu02Info()" ); }
+    #if (__HALA_CUDA_API_VERSION__ < 11070)
     //! \brief Deleter csrsv2Info_t handle.
     void delete_handle(csrsv2Info_t h){ check_cuda( cusparseDestroyCsrsv2Info(h), "cusparseDestroyCsrsv2Info()" ); }
+    #endif
     //! \brief Deleter cusparseSpMatDescr_t handle.
     void delete_handle(cusparseSpMatDescr_t h){ check_cuda( cusparseDestroySpMat(h), "cusparseDestroySpMat()" ); }
     //! \brief Deleter cusparseDnVecDescr_t handle.
