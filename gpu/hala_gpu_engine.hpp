@@ -188,7 +188,7 @@ public:
     //! \brief Automatic return of the rocSparse handle.
     operator rocsparse_handle () const{ return hrocsparse.get(); }
 
-    void set_active_device() const{ hipSetDevice(cgpu); }
+    void set_active_device() const{ check_rocm( hipSetDevice(cgpu), "hipSetDevice()"); }
 
     void set_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas.get(), rocblas_pointer_mode_device), "rocblas_set_pointer_device()" ); }
     void reset_blas_device_pntr() const{ check_rocm( rocblas_set_pointer_mode(hrocblas.get(), rocblas_pointer_mode_host), "rocblas_set_pointer_device()" ); }
@@ -218,7 +218,7 @@ public:
 
     //! \brief Make a rocBlas handle.
     static rocblas_handle make_rocblas_handle(int device){
-        hipSetDevice(device);
+        check_rocm( hipSetDevice(device), "hipSetDevice()");
         rocblas_handle trocblas;
         check_rocm( rocblas_create_handle(&trocblas), "rocblas_create_handle()" );
         check_rocm( rocblas_set_pointer_mode(trocblas, rocblas_pointer_mode_host), "rocblas_set_pointer_mode()" );
@@ -227,7 +227,7 @@ public:
 
     //! \brief Make a rocSparse handle.
     static rocsparse_handle make_rocsparse_handle(int device){
-        hipSetDevice(device);
+        check_rocm( hipSetDevice(device), "hipSetDevice()");
         rocsparse_handle trocsparse;
         check_rocm( rocsparse_create_handle(&trocsparse), "rocsparse_create_handle()"  );
         check_rocm( rocsparse_set_pointer_mode(trocsparse, rocsparse_pointer_mode_host), "rocsparse_set_pointer_mode()" );
