@@ -5,11 +5,11 @@
 | Feature | Tested versions |
 |----|----|
 | gcc     | 7 - 11          |
-| clang   | 6 - 12          |
+| clang   | 12 - 15         |
 | cmake   | 3.19 - 3.23     |
 | OpenBlas| 0.2.20 - 0.3.8  |
 | CUDA    | 11.4 - 12.1     |
-| ROCM    | 3.8             |
+| ROCM    | 5.4             |
 
 HALA supports three modes of installation and usage:
 * CMake install that exports the dependencies and configures the headers

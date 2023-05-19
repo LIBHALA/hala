@@ -13,8 +13,8 @@
 #ifndef __HALA_DOXYGEN_SKIP // tell Doxygen to skip this section
 
 #include <hip/hip_runtime.h>
-#include <rocblas.h>
-#include <rocsparse.h>
+#include <rocblas/rocblas.h>
+#include <rocsparse/rocsparse.h>
 
 #endif // __HALA_DOXYGEN_SKIP
 

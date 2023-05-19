@@ -1,5 +1,6 @@
 ### Version: development
 
+* updated ROCm support to 5.0 and higher
 * dropped support for CUDA 9 and maybe 10
     * tested on CUDA 11.4 - 12.1
 * changed the name of the main development branch to `develop`
