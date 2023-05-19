@@ -159,14 +159,16 @@ solve_gmres(compute_engine const &engine,
 
     auto matrix = make_sparse_matrix(engine, num_rows, pntr, indx, vals);
     size_t bsize =  sparse_gemv_buffer_size(matrix, 'N', 1.0, b, 1.0, x);
-    auto work_buffer = new_vector(x);
-    set_size(bsize, work_buffer);
+    auto work_buffer = new_vector(engine, x);
+    force_size(bsize, work_buffer);
+
+    auto t = new_vector(engine, vals);
+    auto r = new_vector(engine, vals);
+    auto W = new_vector(engine, vals);
+    force_size(hala_size(num_rows, restart), W);
 
     while((outer_res > stop.tol) && (outer_iterations < stop.max_iter)){
         H.resize(0); S.resize(0); C.resize(0); Z.resize(0);
-
-        auto t = new_vector(engine, vals);
-        auto r = new_vector(engine, vals);
 
         vcopy(engine, b, t);
         matrix.gemv('N', -1.0, x, 1.0, t, work_buffer);
@@ -177,8 +179,6 @@ solve_gmres(compute_engine const &engine,
         scal(engine, 1.0 / inner_res, r);
         Z.push_back(get_cast<standart_type>(inner_res));
 
-        auto W = new_vector(engine, vals);
-        force_size(hala_size(num_rows, restart), W);
         vcopy(engine, r, W);
 
         int inner_iterations = 0;
@@ -278,7 +278,7 @@ int solve_gmres(mixed_engine const &engine,
     auto gindx = engine.gpu().load(indx);
     auto gvals = engine.gpu().load(vals);
     auto gb = engine.gpu().load(b);
-    auto gx = cuda_bind_vector(engine.gpu(), x);
+    auto gx = gpu_bind_vector(engine.gpu(), x);
     return solve_gmres(engine.gpu(), stop, restart, gpntr, gindx, gvals, precon, gb, gx);
 }
 

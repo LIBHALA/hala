@@ -349,9 +349,8 @@ public:
         auto bdesc = make_cuda_dvec_description(b, nrows);
 
         auto analysis = analyze_sv(trans, alpha, b, x);
-
         check_cuda( cusparseSpSV_solve(engine(), cuda_trans, palpha, cdesc.get(), bdesc.get(), xdesc.get(), get_cuda_dtype<value_type>(), CUSPARSE_SPSV_ALG_DEFAULT,
-                    analysis), "cusparseSpSV_solve()");
+                                       analysis), "cusparseSpSV_solve()");
     }
     //! \brief Matrix vector product.
     template<typename FPA, class VectorLikeB, class VectorLikeX>
@@ -380,8 +379,9 @@ public:
         if (is_c(transb)) transb = 'T'; // the conj operation cancels out, use simple transpose
         auto cuda_transb = trans_to_cuda_sparse<value_type>(transb);
 
+        auto analysis = analyze_sm(transa, transb, nrhs, alpha, B, ldb, X, nrows);
         check_cuda( cusparseSpSM_solve(engine(), cuda_transa, cuda_transb, palpha, cdesc.get(), bdesc.get(), xdesc.get(), get_cuda_dtype<value_type>(), CUSPARSE_SPSM_ALG_DEFAULT,
-                analyze_sm(transa, transb, nrhs, alpha, B, ldb, X, nrows)), "cusparseSpSM_solve()");
+                                       analysis), "cusparseSpSM_solve()");
 
         if (is_n(transb) and ldb == nrows){
             vcopy(engine(), X, B); // copy back
