@@ -28,8 +28,15 @@ std::vector<std::function<void(void)>> make_tests(cengine const &engine){
         [&]()->void{
             test_gmres<float>(engine);
             test_gmres<double>(engine);
+            #if (__HALA_CUDA_API_VERSION__ >= 11070 && __HALA_CUDA_API_VERSION__ < 12000)
+            if (std::is_same<cengine, hala::cpu_engine>::value){
+            // complex triangular solve is broken in CUDA 11.8
+            #endif
             test_gmres<std::complex<float>>(engine);
             test_gmres<std::complex<double>>(engine);
+            #if (__HALA_CUDA_API_VERSION__ >= 11070 && __HALA_CUDA_API_VERSION__ < 12000)
+            }
+            #endif
         },
     };
 }
