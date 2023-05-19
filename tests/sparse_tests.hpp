@@ -323,10 +323,20 @@ void test_sparse_trsv(cengine const &engine){
     }
 #endif
 
+    // test the unit diagonal case
+    std::vector<T> Au = {1.0, 1.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    refgemm('N', 'N', M, 1, M, hala::get_cast<T>(2.0), Au, Xref, hala::get_cast<T>(0.0), B);
+    vals = {2.0, 1.0, 3.0, 2.0, 4.0};
+
+    tri = make_triangular_matrix(mengine 'L', 'U', bind(pntr), bind(indx), bind(vals));
+    hala::sparse_trsv('N', tri, hala::get_cast<T>(0.5), B, X);
+    hassert(testvec(X, Xref));
+
     pntr = {0, 3, 4, 5};
     indx = {0, 1, 2, 1, 2};
     vals = {1.0, 4.0, 5.0, 2.0, 3.0};
 
+    refgemm('T', 'N', M, 1, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), B);
     tri = make_triangular_matrix(mengine 'U', 'N', bind(pntr), bind(indx), bind(vals));
     X = std::vector<T>();
     hala::sparse_trsv('N', tri, hala::get_cast<T>(0.5), B, X);

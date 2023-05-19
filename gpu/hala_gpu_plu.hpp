@@ -90,7 +90,7 @@ inline void potrf(gpu_engine const &engine, char uplo, int N, VectorLikeA &&A, i
     cuda_call_backend<scalar_type>(cusolverDnSpotrf, cusolverDnDpotrf, cusolverDnCpotrf, cusolverDnZpotrf,
                       "CUDA-SOLVER::potrf()", engine, gpu_uplo, N, cconvert(A), lda, cconvert(W), lwork, info.data());
 
-    lapack_check(info, "hala::potrf()");
+    lapack_check(info, "hala::gpu::potrf()");
 }
 
 /*!
@@ -111,7 +111,7 @@ inline void potrs(gpu_engine const &engine, char uplo, int N, int nrhs, VectorLi
     cuda_call_backend<scalar_type>(cusolverDnSpotrs, cusolverDnDpotrs, cusolverDnCpotrs, cusolverDnZpotrs,
                       "CUDA-SOLVER::potrs()", engine, gpu_uplo, N, nrhs, convert(A), lda, cconvert(B), ldb, info.data());
 
-    lapack_check(info, "hala::potrs()");
+    lapack_check(info, "hala::gpu::potrs()");
 }
 
 /*!
@@ -146,7 +146,7 @@ inline void getrf(gpu_engine const &engine, int M, int N, VectorLikeA &&A, int l
     assert( valid::getrf(M, N, A, lda) );
     check_set_size(assume_output, ipiv, std::min(M, N));
 
-    check_set_size(assume_output, W, potrf_size(engine, M, N, A, lda));
+    check_set_size(assume_output, W, getrf_size(engine, M, N, A, lda));
 
     using scalar_type = get_scalar_type<VectorLikeA>;
 
@@ -154,7 +154,7 @@ inline void getrf(gpu_engine const &engine, int M, int N, VectorLikeA &&A, int l
     cuda_call_backend<scalar_type>(cusolverDnSgetrf, cusolverDnDgetrf, cusolverDnCgetrf, cusolverDnZgetrf,
                       "CUDA-SOLVER::getrf()", engine, M, N, cconvert(A), lda, cconvert(W), cconvert(ipiv), info.data());
 
-    lapack_check(info, "hala::getrf()");
+    lapack_check(info, "hala::gpu::getrf()");
 }
 
 /*!
@@ -174,10 +174,10 @@ inline void getrs(gpu_engine const &engine, char trans, int N, int nrhs, VectorL
 
     gpu_vector<int> info = engine.load(std::vector<int>(1, 0));
     cuda_call_backend<scalar_type>(cusolverDnSgetrs, cusolverDnDgetrs, cusolverDnCgetrs, cusolverDnZgetrs,
-                                   "CUDA-SOLVER::getrf()", engine, gpu_trans, N, nrhs,
+                                   "CUDA-SOLVER::getrs()", engine, gpu_trans, N, nrhs,
                                    convert(A), lda, convert(ipiv), cconvert(B), ldb, info.data());
 
-    lapack_check(info, "hala::getrs()");
+    lapack_check(info, "hala::gpu::getrs()");
 }
 
 

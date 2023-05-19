@@ -4,11 +4,11 @@
 
 | Feature | Tested versions |
 |----|----|
-| gcc     | 5 - 10          |
-| clang   | 4 - 10          |
-| cmake   | 3.10 - 3.16     |
+| gcc     | 7 - 11          |
+| clang   | 6 - 12          |
+| cmake   | 3.19 - 3.23     |
 | OpenBlas| 0.2.20 - 0.3.8  |
-| CUDA    | 10.0 - 11.1     |
+| CUDA    | 11.4 - 12.1     |
 | ROCM    | 3.8             |
 
 HALA supports three modes of installation and usage:
