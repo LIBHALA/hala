@@ -147,7 +147,7 @@ struct mmpack{
     //! \brief Constructor, initialize the data to zero.
     mmpack(){ data = mm_zero<standard_type, R>::get(); }
     //! \brief Constructor, initialize all entries to the given number \b a.
-    template<typename std::enable_if_t<(sizeof(T), true)>* = nullptr>
+    template<typename = std::enable_if_t<is_blas_type<T>::value>>
     mmpack(T const a) : data(mm_set<standard_type, R>(get_cast<standard_type>(a))){}
     //! \brief Constructor, initialize all entries to the given number \b a with different type.
     template<typename U, typename std::enable_if_t<!std::is_same<T, U>::value && !std::is_pointer<U>::value>* = nullptr>
@@ -172,15 +172,15 @@ struct mmpack{
 
     //! \brief Addition overload.
     template<typename dummy = int>
-    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    std::enable_if_t<std::is_same<dummy, int>::value and (R != regtype::none or is_complex<T>::value), mmpack<T, R>>
     operator + (mmpack<T, R> const &other) const{ return data + other.data; }
     //! \brief Subtraction overload.
     template<typename dummy = int>
-    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    std::enable_if_t<std::is_same<dummy, int>::value and (R != regtype::none or is_complex<T>::value), mmpack<T, R>>
     operator - (mmpack<T, R> const &other) const{ return data - other.data; }
     //! \brief Multiplication overload, also handles complex numbers.
     template<typename dummy = int>
-    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    std::enable_if_t<std::is_same<dummy, int>::value and (R != regtype::none or is_complex<T>::value), mmpack<T, R>>
     operator * (mmpack<T, R> const &other) const{
         if (is_complex<T>::value)
             return mm_complex_mul(data, other.data);
@@ -189,7 +189,7 @@ struct mmpack{
     }
     //! \brief Division overload, also handles complex numbers.
     template<typename dummy = int>
-    std::enable_if_t<(sizeof(dummy), R != regtype::none or is_complex<T>::value), mmpack<T, R>>
+    std::enable_if_t<std::is_same<dummy, int>::value and (R != regtype::none or is_complex<T>::value), mmpack<T, R>>
     operator / (mmpack<T, R> const &other) const{
         if (is_complex<T>::value)
             return mm_complex_div(data, other.data);
@@ -298,7 +298,7 @@ struct mmpack{
     void put(T *a, define_unaligned) const{ mm_store<T, R>::unali(a, data); }
 
     //! \brief Return the real part of the \b i-th number.
-    template<typename IndexType, typename std::enable_if_t<(sizeof(IndexType), R != regtype::none)>* = nullptr>
+    template<typename IndexType, typename = std::enable_if_t<std::is_integral<IndexType>::value and R != regtype::none>>
     auto real(IndexType i){
         if (is_complex<T>::value)
             return data[static_cast<size_t>(2*i)];
@@ -306,7 +306,7 @@ struct mmpack{
             return data[static_cast<size_t>(i)];
     }
     //! \brief Return the complex part of the \b i-th number.
-    template<typename IndexType, typename std::enable_if_t<(sizeof(IndexType), R != regtype::none)>* = nullptr>
+    template<typename IndexType, typename = std::enable_if_t<std::is_integral<IndexType>::value and R != regtype::none>>
     auto imag(IndexType i){
         if (is_complex<T>::value)
             return data[static_cast<size_t>(2*i + 1)];
@@ -315,16 +315,16 @@ struct mmpack{
     }
 
     //! \brief Return the real part of the single stored number.
-    template<typename IndexType, typename std::enable_if_t<(sizeof(IndexType), R == regtype::none)>* = nullptr>
+    template<typename IndexType, typename std::enable_if_t<std::is_integral<IndexType>::value and R == regtype::none>* = nullptr>
     auto real(IndexType){ return std::real(data); }
     //! \brief Return the complex part of the single stored number.
-    template<typename IndexType, typename std::enable_if_t<(sizeof(IndexType), R == regtype::none)>* = nullptr>
+    template<typename IndexType, typename std::enable_if_t<std::is_integral<IndexType>::value and R == regtype::none>* = nullptr>
     auto imag(IndexType){ return std::imag(data); }
 
     //! \brief Load from the pointer \b a using default alignment.
     mmpack<T, R>& operator = (T const *a){ load(a); return *this; }
     //! \brief Set all \b data entries to \b a.
-    template<typename std::enable_if_t<(sizeof(T),true)>* = nullptr>
+    template<typename = std::enable_if_t<is_blas_type<T>::value>>
     mmpack<T, R>& operator = (T a){ data = mm_set<T, R>(a); return *this; }
     //! \brief Copy from another aligned memory location.
     mmpack<T, R>& operator = (mm_type const &a){ data = a; return *this; }

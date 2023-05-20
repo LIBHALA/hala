@@ -75,16 +75,16 @@ template<> struct is_dcomplex<cuDoubleComplex> : std::true_type{};
  *
  * Overloads are provided for cuBlas and cuSparse status messages.
  */
-inline void check_cuda(cudaError_t status, std::string const &function_name){
+inline void check_cuda(cudaError_t status, const char *function_name){
     if (status != cudaSuccess)
-        throw std::runtime_error(function_name + " failed with message: " + cudaGetErrorString(status));
+        throw std::runtime_error(std::string(function_name) + " failed with message: " + cudaGetErrorString(status));
 }
 
 /*!
  * \ingroup HALACUDACOMMON
  * \brief Check cuBlas status.
  */
-inline void check_cuda(cublasStatus_t cublasStatus, std::string const &function_name){
+inline void check_cuda(cublasStatus_t cublasStatus, const char *function_name){
     if (cublasStatus != CUBLAS_STATUS_SUCCESS){
         std::string message = "ERROR: cuBlas failed with code: ";
         if (cublasStatus == CUBLAS_STATUS_NOT_INITIALIZED){
@@ -116,7 +116,7 @@ inline void check_cuda(cublasStatus_t cublasStatus, std::string const &function_
  * \ingroup HALACUDACOMMON
  * \brief Check cuSparse status.
  */
-inline void check_cuda(cusparseStatus_t cusparseStatus, std::string const &function_name){
+inline void check_cuda(cusparseStatus_t cusparseStatus, const char *function_name){
     if (cusparseStatus != CUSPARSE_STATUS_SUCCESS){
         std::string message = "ERROR: cuSparse failed with code: ";
         if (cusparseStatus == CUSPARSE_STATUS_NOT_INITIALIZED){
@@ -144,7 +144,7 @@ inline void check_cuda(cusparseStatus_t cusparseStatus, std::string const &funct
  * \ingroup HALACUDACOMMON
  * \brief Check cuSolver status.
  */
-inline void check_cuda(cusolverStatus_t status, std::string const &function_name){
+inline void check_cuda(cusolverStatus_t status, const char *function_name){
     if (status != CUSOLVER_STATUS_SUCCESS){
         std::string message = "ERROR: cuSolver failed with code " + std::to_string(status) + " at " + function_name;
         throw std::runtime_error(message);
@@ -156,7 +156,7 @@ inline void check_cuda(cusolverStatus_t status, std::string const &function_name
  * \brief Very similar to hala::call_backend(), wraps all calls with check_cuda and accepts an engine and string with function name.
  */
 template<typename criteria, typename Fsingle, typename Fdouble, typename Fcomplex, typename Fzomplex, class Engine, class... Inputs>
-inline void cuda_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, std::string const &function_name,
+inline void cuda_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, const char *function_name,
                               Engine const &engine, Inputs const &...args){
     if __HALA_CONSTEXPR_IF__ (is_float<criteria>::value){
         check_cuda( sfunc(engine, args...), function_name );
@@ -176,7 +176,7 @@ inline void cuda_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, F
 template<bool flag, typename criteria, typename Fsingle, typename Fdouble, typename Fcomplex, typename Fzomplex,
          typename Frcomplex, typename Frzomplex, class Engine, class... Inputs>
 inline void cuda_call_backend6(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, Frcomplex &crfunc, Frzomplex &zrfunc,
-                               std::string const &function_name, Engine const &engine, Inputs const &...args){
+                               const char *function_name, Engine const &engine, Inputs const &...args){
     if __HALA_CONSTEXPR_IF__ (flag)
         return cuda_call_backend<criteria>(sfunc, dfunc, cfunc, zfunc, function_name, engine, args...);
     else
