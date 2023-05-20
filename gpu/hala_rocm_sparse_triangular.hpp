@@ -109,8 +109,6 @@ public:
         auto rocm_trans = trans_to_rocm_sparse<value_type>(trans);
         auto palpha = get_pointer<value_type>(alpha);
 
-        runtime_assert(rocm_trans != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsv operations.");
-
         rocm_call_backend<value_type>(rocsparse_scsrsv_solve, rocsparse_dcsrsv_solve, rocsparse_ccsrsv_solve, rocsparse_zcsrsv_solve,
             "csrsv_solve", rengine, rocm_trans, nrows, nz, palpha, cdesc.get(), vals(), rpntr, rindx,
             analysis(rocm_trans, temp), convert(b), cconvert(x), rocsparse_solve_policy_auto, cconvert(temp));
@@ -125,9 +123,6 @@ public:
         auto rocm_transa = trans_to_rocm_sparse<value_type>(transa);
         auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
         auto palpha = get_pointer<value_type>(alpha);
-
-        runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose trsm operations on A.");
-        runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
 
         size_t bsize = 0;
         rocm_call_backend<value_type>(rocsparse_scsrsm_buffer_size, rocsparse_dcsrsm_buffer_size, rocsparse_ccsrsm_buffer_size, rocsparse_zcsrsm_buffer_size,
@@ -146,8 +141,8 @@ public:
         auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
         auto palpha = get_pointer<value_type>(alpha);
 
-        runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose trsm operations on A.");
-        runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 3.5 there is no support for conjugate-transpose trsm operations on B.");
+        runtime_assert(rocm_transa != rocsparse_operation_conjugate_transpose, "as of rocsparse 5.5 there is no support for conjugate-transpose trsm operations on A.");
+        runtime_assert(rocm_transb != rocsparse_operation_conjugate_transpose, "as of rocsparse 5.5 there is no support for conjugate-transpose trsm operations on B.");
 
         rocm_call_backend<value_type>(rocsparse_scsrsm_analysis, rocsparse_dcsrsm_analysis, rocsparse_ccsrsm_analysis, rocsparse_zcsrsm_analysis,
                 "csrsm_analysis", rengine, rocm_transa, rocm_transb, nrows, nrhs, nz, palpha, cdesc.get(), vals(), rpntr, rindx,

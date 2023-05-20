@@ -118,10 +118,6 @@ void test_sparse_matrix(cengine const &engine){
     sp.gemv('N', 2.0, x, 0.0, y);
     hassert(testvec(y, yref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (std::is_same<cengine, hala::mixed_engine>::value) return;
-#endif
-
     #ifdef HALA_ENABLE_GPU
     refgemm('T', 'N', N, 1, N, hala::get_cast<T>(2.0), A, x, hala::get_cast<T>(0.0), yref);
     if (std::is_same<cengine, hala::cpu_engine>::value){
@@ -152,13 +148,9 @@ void test_sparse_matrix(cengine const &engine){
 
     refgemm('N', 'N', M, N, K, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
     sp.gemm('N', 'N', K, N, 2.0, B, K, 0.0, C, M);
-    //hala::sparse_gemm(mengine 'N', 'N', M, N, K, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), K, 0.0, bind(C), M);
     hassert(testvec(C, Cref));
     return;
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     Cref = C = std::vector<T>();
     B = make_vector<T>(M * N);
     refgemm('T', 'N', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
@@ -168,9 +160,6 @@ void test_sparse_matrix(cengine const &engine){
     refgemm('C', 'N', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
     hala::sparse_gemm(mengine 'C', 'N', K, N, M, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), 0.0, bind(C));
     hassert(testvec(C, Cref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 }
 
 template<typename T, int, class cengine>
@@ -192,9 +181,6 @@ void test_sparse_gemv(cengine const &engine){
     hala::sparse_gemv(mengine 'N', 5, 5, hala::get_cast<T>(2.0), bind(pntr), bind(indx), bind(vals), bind(x), hala::get_cast<T>(0.0), bind(y));
     hassert(testvec(y, yref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (std::is_same<cengine, hala::mixed_engine>::value) return;
-#endif
     refgemm('T', 'N', N, 1, N, hala::get_cast<T>(2.0), A, x, hala::get_cast<T>(0.0), yref);
     hala::sparse_gemv(mengine 'T', 5, 5, hala::get_cast<T>(2.0), bind(pntr), bind(indx), bind(vals), bind(x), hala::get_cast<T>(0.0), bind(y));
     hassert(testvec(y, yref));
@@ -225,9 +211,6 @@ void test_sparse_gemm(cengine const &engine){
     hala::sparse_gemm(mengine 'N', 'N', M, N, K, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), K, 0.0, bind(C), M);
     hassert(testvec(C, Cref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     Cref = C = std::vector<T>();
     B = make_vector<T>(M * N);
     refgemm('T', 'N', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
@@ -237,9 +220,6 @@ void test_sparse_gemm(cengine const &engine){
     refgemm('C', 'N', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
     hala::sparse_gemm(mengine 'C', 'N', K, N, M, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), 0.0, bind(C));
     hassert(testvec(C, Cref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 
     hala_rnd = -1;
     B = make_vector<T>(K * N);
@@ -248,9 +228,6 @@ void test_sparse_gemm(cengine const &engine){
     hala::sparse_gemm(mengine 'N', 'T', M, N, K, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), 0.0, bind(C));
     hassert(testvec(C, Cref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     Cref = C = std::vector<T>();
     B = make_vector<T>(M * N);
     refgemm('T', 'T', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
@@ -260,9 +237,6 @@ void test_sparse_gemm(cengine const &engine){
     refgemm('C', 'T', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
     hala::sparse_gemm(mengine 'C', 'T', K, N, M, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), 0.0, bind(C));
     hassert(testvec(C, Cref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 
     hala_rnd = -3;
     B = make_vector<T>(K * N);
@@ -271,9 +245,6 @@ void test_sparse_gemm(cengine const &engine){
     hala::sparse_gemm(mengine 'N', 'C', M, N, K, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), N, 0.0, bind(C), M);
     hassert(testvec(C, Cref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     Cref = C = std::vector<T>();
     B = make_vector<T>(M * N);
     refgemm('T', 'C', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
@@ -283,9 +254,6 @@ void test_sparse_gemm(cengine const &engine){
     refgemm('C', 'C', K, N, M, hala::get_cast<T>(2.0), A, B, hala::get_cast<T>(0.0), Cref);
     hala::sparse_gemm(mengine 'C', 'C', K, N, M, 2.0, bind(pntr), bind(indx), bind(vals), bind(B), N, 0.0, bind(C), K);
     hassert(testvec(C, Cref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 }
 
 template<typename T, int, class cengine>
@@ -312,16 +280,10 @@ void test_sparse_trsv(cengine const &engine){
     hala::sparse_trsv('T', tri, hala::get_cast<T>(0.5), B, X);
     hassert(testvec(X, Xref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     refgemm('C', 'N', M, 1, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), B);
     X = std::vector<T>();
     hala::sparse_trsv('C', tri, hala::get_cast<T>(0.5), B, X);
     hassert(testvec(X, Xref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 
     // test the unit diagonal case
     std::vector<T> Au = {1.0, 1.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
@@ -367,19 +329,9 @@ void test_sparse_trsm(cengine const &engine){
     hala::sparse_trsm('N', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
     hassert(testvec(X, Xref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     refgemm('T', 'N', M, nrhs, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), X);
     hala::sparse_trsm('T', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
     hassert(testvec(X, Xref));
-
-    refgemm('C', 'N', M, nrhs, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), X);
-    hala::sparse_trsm('C', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
-    hassert(testvec(X, Xref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 
     refgemm('N', 'T', nrhs, M, M, hala::get_cast<T>(2.0), Xref, A, hala::get_cast<T>(0.0), X);
     hala::sparse_trsm('N', 'T', nrhs, tri, hala::get_cast<T>(0.5), X);
@@ -388,6 +340,10 @@ void test_sparse_trsm(cengine const &engine){
 #ifdef HALA_ENABLE_ROCM
     if (not std::is_same<cengine, hala::mixed_engine>::value){
 #endif
+    refgemm('C', 'N', M, nrhs, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), X);
+    hala::sparse_trsm('C', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
+    hassert(testvec(X, Xref));
+
     refgemm('N', 'C', nrhs, M, M, hala::get_cast<T>(2.0), Xref, A, hala::get_cast<T>(0.0), X);
     hala::sparse_trsm('N', 'C', nrhs, tri, hala::get_cast<T>(0.5), X);
     hassert(testvec(X, Xref));
@@ -404,15 +360,9 @@ void test_sparse_trsm(cengine const &engine){
     hala::sparse_trsm('N', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
     hassert(testvec(X, Xref));
 
-#ifdef HALA_ENABLE_ROCM
-    if (not std::is_same<cengine, hala::mixed_engine>::value){
-#endif
     refgemm('N', 'N', M, nrhs, M, hala::get_cast<T>(2.0), A, Xref, hala::get_cast<T>(0.0), X);
     hala::sparse_trsm('T', 'N', nrhs, tri, hala::get_cast<T>(0.5), X);
     hassert(testvec(X, Xref));
-#ifdef HALA_ENABLE_ROCM
-    }
-#endif
 }
 
 template<typename T> void test_split_matrix(){

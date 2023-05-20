@@ -46,9 +46,6 @@ int main(int argc, char**){
         all_tests = make_tests_wengine(emixed);
         for(auto const &test : all_tests) perform(test);
 
-        #ifdef HALA_ENABLE_ROCM
-        hala::gpu_engine dummy(gpuid); // no clue why this is needed by ROCm, it is not the obvious
-        #endif
         begin_report(std::string("Testing GPU BLAS: device ") + std::to_string(gpuid) + " (no engine)");
         all_tests = make_tests_noengine(emixed);
         for(auto const &test : all_tests) perform(test);
