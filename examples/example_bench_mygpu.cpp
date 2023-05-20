@@ -40,6 +40,7 @@ std::vector<T> make_matrix(int n){
 int main(int, char**){
     cout << std::fixed; cout.precision(2);
 
+    #ifdef HALA_ENABLE_CUDA
     int n = 0;
     hala::chronometer meter;
 
@@ -76,8 +77,10 @@ int main(int, char**){
              << " Gflops/second\n";
     }
 
+    #else
+    std::cout << "HALA_GPU_BACKEND is set to NONE, this example requires a GPU backend\n";
+    #endif
 
     return 0;
 //! [Example_04 main]
 }
-
