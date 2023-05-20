@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 
 @PACKAGE_INIT@
 
@@ -10,6 +10,13 @@ set_target_properties(HALA::HALA PROPERTIES INTERFACE_LINK_LIBRARIES HALA)
 foreach(_hala_components @_hala_components@)
     set(HALA_${_hala_components}_FOUND "ON")
 endforeach()
+
+if (HALA_CUDA_FOUND)
+    if (NOT CUDAToolkit_ROOT AND NOT "@CUDAToolkit_ROOT@" STREQUAL "")
+        set(CUDAToolkit_ROOT "@CUDAToolkit_ROOT@")
+    endif()
+    find_package(CUDAToolkit REQUIRED)
+endif()
 
 if (HALA_ROCM_FOUND)
     if (NOT "@HALA_ROCM_ROOT@" STREQUAL "")
