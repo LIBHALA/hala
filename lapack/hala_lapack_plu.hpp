@@ -44,9 +44,9 @@ namespace hala{
  *
  * \endinternal
  */
-inline void lapack_check(int info, std::string const &name){
+inline void lapack_check(int info, const char *name){
     if (info != 0)
-        throw std::runtime_error(name + " returned error code: " + std::to_string(info));
+        throw std::runtime_error(std::string(name) + " returned error code: " + std::to_string(info));
 }
 
 /*!

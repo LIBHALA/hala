@@ -41,9 +41,9 @@ namespace hala{
  *
  * \endinternal
  */
-inline void lapack_check(gpu_vector<int> const &info, std::string const &name){
+inline void lapack_check(gpu_vector<int> const &info, const char *name){
     if (info.unload()[0] != 0)
-        throw std::runtime_error(name + " returned error code: " + std::to_string(info.unload()[0]));
+        throw std::runtime_error(std::string(name) + " returned error code: " + std::to_string(info.unload()[0]));
 }
 
 /*!

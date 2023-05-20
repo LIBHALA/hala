@@ -85,7 +85,7 @@ inline std::string info_from(rocblas_status status){
  *
  * Overloads are provided for cuBlas and cuSparse status messages.
  */
-inline void check_rocm(rocblas_status status, std::string const &function_name){
+inline void check_rocm(rocblas_status status, const char *function_name){
     if (status != rocblas_status_success)
         throw std::runtime_error(std::string("rocblas encountered an error with code: ") + info_from(status) + ", at " + function_name);
 }
@@ -94,7 +94,7 @@ inline void check_rocm(rocblas_status status, std::string const &function_name){
  * \ingroup HALAROCMCOMMON
  * \brief Check AMD HIP status.
  */
-inline void check_rocm(hipError_t status, std::string const &function_name){
+inline void check_rocm(hipError_t status, const char *function_name){
    if (status != hipSuccess)
        throw std::runtime_error(std::string("rocm-hip encountered an error with code: ") + std::to_string(status) + " at " + function_name);
 }
@@ -103,7 +103,7 @@ inline void check_rocm(hipError_t status, std::string const &function_name){
  * \ingroup HALAROCMCOMMON
  * \brief Check AMD HIP status.
  */
-inline void check_rocm(rocsparse_status status, std::string const &function_name){
+inline void check_rocm(rocsparse_status status, const char *function_name){
    if (status != rocsparse_status_success)
        throw std::runtime_error(std::string("rocsparse encountered an error with code: ") + std::to_string(status) + " at " + function_name);
 }
@@ -113,7 +113,7 @@ inline void check_rocm(rocsparse_status status, std::string const &function_name
  * \brief Very similar to hala::call_backend(), wraps all calls with check_rocm and accepts an engine and string with function name.
  */
 template<typename criteria, typename Fsingle, typename Fdouble, typename Fcomplex, typename Fzomplex, class Engine, class... Inputs>
-inline void rocm_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, std::string const &function_name,
+inline void rocm_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, const char *function_name,
                               Engine const &engine, Inputs const &...args){
     if __HALA_CONSTEXPR_IF__ (is_float<criteria>::value){
         check_rocm( sfunc(engine, args...), function_name );
@@ -133,7 +133,7 @@ inline void rocm_call_backend(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, F
 template<bool flag, typename criteria, typename Fsingle, typename Fdouble, typename Fcomplex, typename Fzomplex,
          typename Frcomplex, typename Frzomplex, class Engine, class... Inputs>
 inline void rocm_call_backend6(Fsingle &sfunc, Fdouble &dfunc, Fcomplex &cfunc, Fzomplex &zfunc, Frcomplex &crfunc, Frzomplex &zrfunc,
-                               std::string const &function_name, Engine const &engine, Inputs const &...args){
+                               const char *function_name, Engine const &engine, Inputs const &...args){
     if __HALA_CONSTEXPR_IF__ (flag)
         return rocm_call_backend<criteria>(sfunc, dfunc, cfunc, zfunc, function_name, engine, args...);
     else
