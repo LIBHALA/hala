@@ -189,17 +189,27 @@ struct is_compatible<T, U, std::enable_if_t<
         (is_dcomplex<T>::value && is_dcomplex<U>::value)
     >> : std::true_type{};
 
+/*!
+ * \ingroup HALACHECKTYPES
+ * \brief Specializes to std::true_type for types float, double, complex<float>, complex<double>.
+ */
+template<typename T, typename = void> struct is_blas_type : std::false_type{};
+/*!
+ * \ingroup HALACHECKTYPES
+ * \brief Specialization for the correct types.
+ */
+template<typename T>
+struct is_blas_type<T, std::enable_if_t<is_float<T>::value ||
+                                        is_double<T>::value ||
+                                        is_fcomplex<T>::value ||
+                                        is_dcomplex<T>::value>> : std::true_type{};
 
 /*!
  * \ingroup HALACHECKTYPES
  * \brief Static asserts that the value_type of \b VectorLike is one of float, double, complex<float>, complex<double>.
  */
 template<class VectorLike> void check_types(VectorLike const &){
-    using scalar_type = get_scalar_type<VectorLike>;
-    static_assert(is_float<scalar_type>::value ||
-                  is_double<scalar_type>::value ||
-                  is_fcomplex<scalar_type>::value ||
-                  is_dcomplex<scalar_type>::value,
+    static_assert(is_blas_type<get_scalar_type<VectorLike>>::value,
                   "HALA BLAS and LAPACK templates can only be instantiated with float, double, complex<float> and complex<double>");
 }
 
