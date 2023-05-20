@@ -118,7 +118,6 @@ public:
         pntr_check_set_size(beta, y, (is_n(trans)) ? rows : cols, 1);
 
         auto rocm_trans = trans_to_rocm_sparse<value_type>(trans);
-        runtime_assert(rocm_trans == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose gemv operations.");
         auto palpha = get_pointer<value_type>(alpha);
         auto pbeta  = get_pointer<value_type>(beta);
 
@@ -132,43 +131,33 @@ public:
         gemv(trans, alpha, x, beta, y, gpu_vector<value_type>(rengine.device()));
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
-    size_t gemm_buffer_size(char, char transb, int b_rows, int b_cols, FSA, VectorLikeB const&, int, FSB, VectorLikeC&, int) const{
-        if (is_complex<value_type>::value and trans_to_rocm_sparse<value_type>(transb) == rocsparse_operation_conjugate_transpose){
-            return hala_size(b_rows, b_cols) * sizeof(value_type);
-        }
+    size_t gemm_buffer_size(char, char, int, int, FSA, VectorLikeB const&, int, FSB, VectorLikeC&, int) const{
         return 0;
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC, class VectorLikeT>
-    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&temp) const{
+    void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc, VectorLikeT &&) const{
         check_types(rvals, B, C);
         rengine.check_gpu(B, C);
-        int M = (is_n(transa)) ? rows : cols;
+        int M = rows;
         int N = (is_n(transb)) ? b_cols : b_rows;
-        int K = (is_n(transa)) ? cols : rows;
+        int K = cols;
         pntr_check_set_size(beta, C, ldc, N);
-        assert( valid::sparse_gemm(transa, transb, M, N, K, nnz, rpntr, rindx, rvals, B, ldb, C, ldc) );
+        // rocsparse uses different definition for M and K that is fixed on A regardless of op(A)
+        // error checking uses the standard format but the functon call uses the rocblas way
+        assert( valid::sparse_gemm(transa, transb, (is_n(transa)) ? rows : cols, N, (is_n(transa)) ? cols : rows, nnz, rpntr, rindx, rvals, B, ldb, C, ldc) );
 
         auto palpha = get_pointer<value_type>(alpha);
         auto pbeta  = get_pointer<value_type>(beta);
 
         auto rocm_transa = trans_to_rocm_sparse<value_type>(transa);
         auto rocm_transb = trans_to_rocm_sparse<value_type>(transb);
-        runtime_assert(rocm_transa == rocsparse_operation_none, "as of rocsparse 3.5 there is no support for transpose and conjugate-transpose gemm operations.");
 
-        if (is_complex<value_type>::value and rocm_transb == rocsparse_operation_conjugate_transpose){
-            // employing manual out-of-place conj-transpose for B
-            geam(rengine, 'C', 'C', K, N, 1.0, B, ldb, 0.0, B, ldb, temp, K);
-            rocm_call_backend<value_type>(rocsparse_scsrmm, rocsparse_dcsrmm, rocsparse_ccsrmm, rocsparse_zcsrmm,
-                "csrmm()", rengine, rocm_transa, rocsparse_operation_none, M, N, K, nnz, palpha, desc.get(), convert(rvals), convert(rpntr), convert(rindx), convert(temp), K, pbeta, cconvert(C), ldc);
-        }else{
-        rocm_call_backend<value_type>(rocsparse_scsrmm, rocsparse_dcsrmm, rocsparse_ccsrmm, rocsparse_zcsrmm,
-                "csrmm()", rengine, rocm_transa, rocm_transb, M, N, K, nnz, palpha, desc.get(), convert(rvals), convert(rpntr), convert(rindx), convert(B), ldb, pbeta, cconvert(C), ldc);
-        }
+		rocm_call_backend<value_type>(rocsparse_scsrmm, rocsparse_dcsrmm, rocsparse_ccsrmm, rocsparse_zcsrmm,
+            "csrmm()", rengine, rocm_transa, rocm_transb, M, N, K, nnz, palpha, desc.get(), convert(rvals), convert(rpntr), convert(rindx), convert(B), ldb, pbeta, cconvert(C), ldc);
     }
     template<typename FSA, class VectorLikeB, typename FSB, class VectorLikeC>
     void gemm(char transa, char transb, int b_rows, int b_cols, FSA alpha, VectorLikeB const &B, int ldb, FSB beta, VectorLikeC &C, int ldc) const{
-        size_t work = gemm_buffer_size(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc);
-        gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc, gpu_vector<value_type>(work / sizeof(value_type) + 1, rengine.device()));
+        gemm(transa, transb, b_rows, b_cols, alpha, B, ldb, beta, C, ldc, 0);
     }
 
 private:
